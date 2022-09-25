@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 
 router
     .post('/login-vehicle-owner', authController.handleLoginVehicleOwner)
-    // .post('/login-fuel-station', authController.handleLoginFuelStation)
+    .post('/register-email-existance', authController.handleEmailExistance)
     .post('/register', authController.handleRegister)
 
 module.exports = router;
