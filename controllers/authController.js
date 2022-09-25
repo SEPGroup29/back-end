@@ -2,21 +2,48 @@ const mongoose = require('mongoose');
 const VehicleOwner = require('../models/vehicleOwnerModel')
 const FuelStationManager = require('../models/fuelStationManagerModal')
 const PumpOperator = require('../models/pumpOperatorModel');
+const nodemailer = require('nodemailer');
 
 // functions 
-const handleRegister = async (req, res) => {
-    const {NIC, email, firstName, lastName} = req.body
 
-    // Data validation
-        // ................
+let generated_otp = null
 
-    //Enter to database
+// Check already exisiting email
+const handleEmailExistance = async (req, res) => {
+    const { email } = req.body;
+
     try {
-        const vehicleOwner = await VehicleOwner.create({ NIC, email, firstName, lastName })
-        res.status(200).json(vehicleOwner)
-      } catch (error) {
+        const result = await VehicleOwner.findOne({ email });
+        if (result) {
+            res.status(200).json({ result: 'Email already exists' })
+        } else {
+            generated_otp = 12345;    // Should be generated
+            res.status(200).json({ generated_otp })
+        }
+    } catch (error) {
         res.status(400).json({ error: error.message })
-      }
+    }
+}
+
+const handleRegister = async (req, res) => {
+    const { NIC, email, entered_otp, firstName, lastName } = req.body
+    console.log(entered_otp, generated_otp)
+    // OTP check
+    if (entered_otp === generated_otp) {
+        // Data validation
+            // ................
+    
+        //Enter to database
+        try {
+            const vehicleOwner = await VehicleOwner.create({ NIC, email, firstName, lastName })
+            res.status(200).json(vehicleOwner)
+        } catch (error) {
+            res.status(400).json({ error: error.message })
+        }
+    } else {
+        res.status(400).json({ error: 'Invalid OTP' })
+    }
+
 }
 
 const handleLoginVehicleOwner = async (req, res) => {
@@ -28,8 +55,8 @@ const handleLoginVehicleOwner = async (req, res) => {
 
     // Find email in database
     try {
-        const result = await VehicleOwner.findOne({email});
-        res.status(200).json( result );
+        const result = await VehicleOwner.findOne({ email });
+        res.status(200).json(result);
     } catch (error) {
         res.status(400).json({ err: error.message });
     }
@@ -50,6 +77,7 @@ const handleLogout = async (req, res) => {
 }
 
 module.exports = {
+    handleEmailExistance,
     handleRegister,
     handleLoginVehicleOwner,
     handleLoginFuelStation,
