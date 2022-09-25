@@ -6,6 +6,8 @@ const nodemailer = require('nodemailer');
 
 // functions 
 
+let generated_otp = null
+
 // Check already exisiting email
 const handleEmailExistance = async (req, res) => {
     const { email } = req.body;
@@ -15,7 +17,8 @@ const handleEmailExistance = async (req, res) => {
         if (result) {
             res.status(200).json({ result: 'Email already exists' })
         } else {
-            res.status(200).json({ result: 'Email available' })
+            generated_otp = 12345;    // Should be generated
+            res.status(200).json({ generated_otp })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -23,18 +26,24 @@ const handleEmailExistance = async (req, res) => {
 }
 
 const handleRegister = async (req, res) => {
-    const { NIC, email, firstName, lastName } = req.body
-
-    // Data validation
-        // ................
-
-    //Enter to database
-    try {
-        const vehicleOwner = await VehicleOwner.create({ NIC, email, firstName, lastName })
-        res.status(200).json(vehicleOwner)
-    } catch (error) {
-        res.status(400).json({ error: error.message })
+    const { NIC, email, entered_otp, firstName, lastName } = req.body
+    console.log(entered_otp, generated_otp)
+    // OTP check
+    if (entered_otp === generated_otp) {
+        // Data validation
+            // ................
+    
+        //Enter to database
+        try {
+            const vehicleOwner = await VehicleOwner.create({ NIC, email, firstName, lastName })
+            res.status(200).json(vehicleOwner)
+        } catch (error) {
+            res.status(400).json({ error: error.message })
+        }
+    } else {
+        res.status(400).json({ error: 'Invalid OTP' })
     }
+
 }
 
 const handleLoginVehicleOwner = async (req, res) => {
