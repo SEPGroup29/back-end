@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const VehicleOwner = require('../models/vehicleOwnerModel')
+const Admin = require('../models/adminModel');
 const FuelStationManager = require('../models/fuelStationManagerModal')
 const PumpOperator = require('../models/pumpOperatorModel');
 const {generateOTP}  = require('../services/otp');
@@ -47,10 +48,10 @@ const handleRegister = async (req, res) => {
                 res.status(400).json({ error: error.message })
             }
         } else {
-            res.status(400).json({ error: 'Invalid OTP' })
+            res.status(200).json({ error: 'Invalid OTP' })
         }
     } else{
-        res.status(400).json({ error: 'Email mismatch' })
+        res.status(200).json({ error: 'Email mismatch' })
     }
 
 
@@ -68,7 +69,7 @@ const handleLoginVehicleOwner = async (req, res) => {
         if(result){
             generated_otp = generateOTP();
             const mail_status = await sendMail({ to: email, OTP: generated_otp });
-            console.log(mail_status)
+            //console.log(mail_status)
             res.status(200).json({result:'OTP sent', generated_otp});
         } else{
             res.status(400).json({ error: 'Email not found' })
@@ -104,6 +105,20 @@ const handleLoginFuelStation = async (req, res) => {
 
 }
 
+const handleAdminLogin = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const result = await Admin.findOne({ email, password });
+        if (result) {
+            res.status(200).json({ result: 'Login success' })
+        } else {
+            res.status(200).json({ result: 'Invalid credentials' })
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
 const handleLogout = async (req, res) => {
 
 }
@@ -114,5 +129,6 @@ module.exports = {
     handleLoginVehicleOwner,
     handleLoginFuelStation,
     handleLogout,
-    handleLoginAfterOTP
+    handleLoginAfterOTP,
+    handleAdminLogin
 }
