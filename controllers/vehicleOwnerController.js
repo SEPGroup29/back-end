@@ -11,8 +11,8 @@ const addVehicle = async (req, res) => {
     // Check for existing vehicles
     try {
         const result = await Vehicle.findOne({ regNo })
-        if (result) {
-            res.status(400).json({ error: 'Vehicle already exists' })
+        if (result) {   as
+            res.status(200).json({ error: 'Vehicle already exists' })
         } else {
             //Get vehicle type
             try {
