@@ -34,4 +34,4 @@ mongoose.connect(uri, connectionParams)
 app.use('/auth', require('./routes/auth'))
 
 //API routes
-    // Enter API routes here
+app.use('/api/vehicle-owner', require('./routes/api/vehicle_owner'))

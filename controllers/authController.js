@@ -18,7 +18,7 @@ const handleEmailExistance = async (req, res) => {
             res.status(200).json({ result: 'Email already exists' })
         } else {
             generated_otp = 12345;    // Should be generated
-            res.status(200).json({ generated_otp })
+            res.status(200).json({ result: 'sent' })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
