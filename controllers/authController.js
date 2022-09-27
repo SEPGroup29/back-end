@@ -48,10 +48,10 @@ const handleRegister = async (req, res) => {
                 res.status(400).json({ error: error.message })
             }
         } else {
-            res.status(400).json({ error: 'Invalid OTP' })
+            res.status(200).json({ error: 'Invalid OTP' })
         }
     } else{
-        res.status(400).json({ error: 'Email mismatch' })
+        res.status(200).json({ error: 'Email mismatch' })
     }
 
 
