@@ -11,6 +11,7 @@ let generated_otp
 let entered_email 
 // Check already exisiting email
 const handleEmailExistance = async (req, res) => {
+    console.log('insideemailexistence')
     const { email } = req.body;
     entered_email = email
     try {
