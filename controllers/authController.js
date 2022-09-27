@@ -23,7 +23,7 @@ const handleEmailExistance = async (req, res) => {
             generated_otp = generateOTP();
             const mail_status = await sendMail({ to: entered_email, OTP: generated_otp });
             console.log(mail_status)
-            res.status(200).json({ generated_otp })
+            res.status(200).json({ result: 'Sent' })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
