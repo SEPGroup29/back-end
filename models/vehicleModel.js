@@ -19,7 +19,6 @@ const vehicleSchema = new Schema({
     },
     queuePosition:{
         type: Number,
-        required: true
     }
 })
 
