@@ -7,5 +7,6 @@ router
     .post('/register-email-existance', authController.handleEmailExistance)
     .post('/register', authController.handleRegister)
     .post('/login-otp', authController.handleLoginAfterOTP)
+    .post('/login-admin', authController.handleAdminLogin)
 
 module.exports = router;
