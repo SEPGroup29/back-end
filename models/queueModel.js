@@ -6,8 +6,8 @@ const queueSchema = new Schema({
         type: String,
         required: true
     },
-    vehicles:[
-        {type: Schema.Types.ObjectId, ref: 'Vehicle'}
+    fuelStationId: [
+        {type: Schema.Types.ObjectId, ref: 'FuelStation'}
     ]
 })
 

@@ -29,16 +29,7 @@ const fuelStationSchema = new Schema({
     rdstock: {
         type: Number,
         required: true
-    },
-    queues: [
-        {type: Schema.Types.ObjectId, ref: 'Queue'}
-    ],
-    manager: [
-        {type: Schema.Types.ObjectId, ref: 'Manager'}
-    ],
-    pumpOperators: [
-        {type: Schema.Types.ObjectId, ref: 'PumpOperator'}
-    ]
+    }
 });
 
 const FuelStation = mongoose.model('FuelStation', fuelStationSchema);

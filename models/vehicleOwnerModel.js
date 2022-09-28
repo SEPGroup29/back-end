@@ -24,9 +24,6 @@ const vehicleOwnerSchema = new Schema({
     consumedDQ: {
         type: Number,
     },
-    vehicles: [
-        {type: Schema.Types.ObjectId, ref: 'Vehicle'}
-    ],
     fuelQuota: [
         {type: Schema.Types.ObjectId, ref: 'FuelQuota'}
     ]

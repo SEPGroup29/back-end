@@ -17,9 +17,15 @@ const vehicleSchema = new Schema({
         type: String,
         required: true
     },
+    vehicleOwnerId: [
+        {type: Schema.Types.ObjectId, ref: 'VehicleOwner'}
+    ],
     queuePosition:{
         type: Number,
-    }
+    },
+    queueId: [
+        {type: Schema.Types.ObjectId, ref: 'Vehicle'}
+    ]
 })
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
