@@ -6,7 +6,7 @@ const vehicleOwnerSchema = new Schema({
         type: String,
         required: true
     },
-    email:{
+    email: {
         type: String,
         required: true
     },
@@ -24,13 +24,9 @@ const vehicleOwnerSchema = new Schema({
     consumedDQ: {
         type: Number,
     },
-    vehicles: [
-        {type: Schema.Types.ObjectId, ref: 'Vehicle'}
-    ],
-    fuelQuota: [
-        {type: Schema.Types.ObjectId, ref: 'FuelQuota'}
-    ]
-
+    fuelQuota: {
+        type: Schema.Types.String, ref: 'FuelQuota'
+    }
 })
 
 const VehicleOwner = mongoose.model('VehicleOwner', vehicleOwnerSchema);

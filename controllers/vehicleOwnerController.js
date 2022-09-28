@@ -11,13 +11,8 @@ const addVehicle = async (req, res) => {
     //Check for vehicle count
     try {
         const NIC = '123456789V'    // Should get current user's nic
-        const vehicleOwner = await VehicleOwner.findOne({ NIC })
-        const vehicle_objects = vehicleOwner.vehicles
-        let v_ids = []
-        vehicle_objects.forEach((vo) => {
-            v_ids.push(vo.toString())
-        })
-        const vehicles = await Vehicle.find({ _id: { $in: v_ids } })
+        const vehicles = await Vehicle.find({ NIC })
+        console.log(vehicles.length)
         if (vehicles.length === 3) {
             res.status(200).json({ error: 'Vehicle limit reached' })
         }
@@ -34,8 +29,7 @@ const addVehicle = async (req, res) => {
                         if (result) {
                             //Enter to database
                             try {
-                                const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType })
-                                const r = await VehicleOwner.updateOne({ NIC }, { $push: { vehicles: vehicle } })
+                                const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: NIC })
                                 res.status(200).json(vehicle)
                             } catch (error) {
                                 res.status(400).json({ error: error.message })
@@ -59,51 +53,37 @@ const addVehicle = async (req, res) => {
 
 const showVehicles = async (req, res) => {
     try {
-        const NIC = '123456789V'    // Should get current user's nic
-        const vehicleOwner = await VehicleOwner.findOne({ NIC })
-        const vehicle_objects = vehicleOwner.vehicles
-        let v_ids = []
-        vehicle_objects.forEach((vo) => {
-            v_ids.push(vo.toString())
-        })
-        const r = await Vehicle.find({ _id: { $in: v_ids } })
-        let v_types = []
-        r.forEach((v) => {
-            v_types.push(v.vehicleType.toString())
-        })
-        const types = await VehicleTypes.find({ _id: { $in: v_types } })
-        let vehicles = []
-        for (let i = 0; i < r.length; i++) {
-            vehicles.push({
-                id: v_ids[i],
-                regNo: r[i].regNo,
-                chassisNo: r[i].chassisNo,
-                vehicleType: types[i].type,
-                fuelType: r[i].fuelType,
-            })
-        }
-        res.status(200).json({ vehicles })
+        const NIC = '123456789V'
+        const vehicles = await Vehicle.find({ vehicleOwnerId:NIC })
+        console.log(vehicles)
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
 
-const deleteVehicle = async (req, res) => {
-    const {id} = req.body
-    try {
-        const vehicle = await Vehicle.findOneAndDelete({_id: id})
-        if (vehicle) {
-            res.status(200).json({ success: 'Deleted' })
-        } else {
-            res.status(200).json({ error: 'Vehicle does not exisis' })
-        }
-    } catch (error) {
-        res.status(400).json({ error: error.message })
-    }
-}
+// const deleteVehicle = async (req, res) => {
+//     const { id } = req.body
+//     try {
+//         const vehicle = await Vehicle.findOneAndDelete({ _id: id })
+//         if (vehicle) {
+//             res.status(200).json({ success: 'Deleted' })
+//         } else {
+//             res.status(200).json({ error: 'Vehicle does not exisis' })
+//         }
+//     } catch (error) {
+//         res.status(400).json({ error: error.message })
+//     }
+// }
+
+// const getVehicleTypes = async (req, res) => {
+//     try {
+//         const typesd= await VehicleTypes.
+//     } catch (error) {
+
+//     }
+// }
 
 module.exports = {
     addVehicle,
     showVehicles,
-    deleteVehicle,
 }

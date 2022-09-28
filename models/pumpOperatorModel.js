@@ -5,6 +5,9 @@ const pummpOperatorSchema = new Schema({
     password: {
         type: String,
         required: true
+    },
+    fuelStationId: {
+        type: Schema.Types.String, ref: 'FuelStation'
     }
 })
 
