@@ -6,9 +6,9 @@ const pummpOperatorSchema = new Schema({
         type: String,
         required: true
     },
-    fuelStationId: [
-        {type: Schema.Types.ObjectId, ref: 'FuelStation'}
-    ]
+    fuelStationId: {
+        type: Schema.Types.String, ref: 'FuelStation'
+    }
 })
 
 const PumpOperator = mongoose.model('PumpOperator', pummpOperatorSchema);
