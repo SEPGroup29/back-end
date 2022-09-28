@@ -59,39 +59,22 @@ const addVehicle = async (req, res) => {
 
 const showVehicles = async (req, res) => {
     try {
-        const NIC = '123456789V'    // Should get current user's nic
-        const vehicleOwner = await VehicleOwner.findOne({ NIC })
-        const vehicle_objects = vehicleOwner.vehicles
-        let v_ids = []
-        vehicle_objects.forEach((vo) => {
-            v_ids.push(vo.toString())
-        })
-        const r = await Vehicle.find({ _id: { $in: v_ids } })
-        let v_types = []
-        r.forEach((v) => {
-            v_types.push(v.vehicleType.toString())
-        })
-        const types = await VehicleTypes.find({ _id: { $in: v_types } })
-        let vehicles = []
-        for (let i = 0; i < r.length; i++) {
-            vehicles.push({
-                id: v_ids[i],
-                regNo: r[i].regNo,
-                chassisNo: r[i].chassisNo,
-                vehicleType: types[i].type,
-                fuelType: r[i].fuelType,
-            })
-        }
-        res.status(200).json({ vehicles })
+        const NIC = '123456789V'
+        const vo = await VehicleOwner.findOne({ NIC })
+            .populate('vehicles')
+            .exec()
+        const vehicles = vo.vehicles
+        // console.log(vehicles)
+        // const newVehicles = await
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
 
 const deleteVehicle = async (req, res) => {
-    const {id} = req.body
+    const { id } = req.body
     try {
-        const vehicle = await Vehicle.findOneAndDelete({_id: id})
+        const vehicle = await Vehicle.findOneAndDelete({ _id: id })
         if (vehicle) {
             res.status(200).json({ success: 'Deleted' })
         } else {
@@ -101,6 +84,14 @@ const deleteVehicle = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
+
+// const getVehicleTypes = async (req, res) => {
+//     try {
+//         const typesd= await VehicleTypes.
+//     } catch (error) {
+
+//     }
+// }
 
 module.exports = {
     addVehicle,
