@@ -8,6 +8,9 @@ const pummpOperatorSchema = new Schema({
     },
     fuelStationId: {
         type: Schema.Types.String, ref: 'FuelStation'
+    },
+    userType:{
+        type: Schema.Types.String, ref: 'UserTypes'
     }
 })
 

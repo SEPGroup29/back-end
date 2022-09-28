@@ -26,6 +26,9 @@ const vehicleOwnerSchema = new Schema({
     },
     fuelQuota: {
         type: Schema.Types.String, ref: 'FuelQuota'
+    },
+    userType:{
+        type: Schema.Types.String, ref: 'UserTypes'
     }
 })
 
