@@ -4,7 +4,9 @@ const Admin = require('../models/adminModel');
 const FuelStationManager = require('../models/fuelStationManagerModal')
 const PumpOperator = require('../models/pumpOperatorModel');
 const {generateOTP}  = require('../services/otp');
-const {sendMail} = require('../services/mail');
+const {sendRegOtpMail} = require('../services/mail/reg_otp_mail');
+const {sendRegSuccessMail} = require('../services/mail/reg_success_mail');
+const {sendLoginOtpMail} = require('../services/mail/login_otp_mail');
 
 // functions 
 
@@ -21,7 +23,11 @@ const handleEmailExistance = async (req, res) => {
             res.status(200).json({ result: 'Email already exists' })
         } else {
             generated_otp = generateOTP();
-            const mail_status = await sendMail({ to: entered_email, OTP: generated_otp });
+            // OTP reset after 1min timeout
+            // setTimeout(() => {
+            //     generated_otp = null
+            // }, 60000)
+            const mail_status = await sendRegOtpMail({ to: entered_email, OTP: generated_otp });
             console.log(mail_status)
             res.status(200).json({ result: 'Sent' })
         }
@@ -43,6 +49,8 @@ const handleRegister = async (req, res) => {
             //Enter to database
             try {
                 const vehicleOwner = await VehicleOwner.create({ NIC, email, firstName, lastName })
+                const mail_status = await sendRegSuccessMail({ to: entered_email });
+                console.log(mail_status)
                 res.status(200).json(vehicleOwner)
             } catch (error) {
                 res.status(400).json({ error: error.message })
@@ -68,7 +76,7 @@ const handleLoginVehicleOwner = async (req, res) => {
         const result = await VehicleOwner.findOne({ email });
         if(result){
             generated_otp = generateOTP();
-            const mail_status = await sendMail({ to: email, OTP: generated_otp });
+            const mail_status = await sendLoginOtpMail({ to: email, OTP: generated_otp });
             //console.log(mail_status)
             res.status(200).json({result:'OTP sent', generated_otp});
         } else{
