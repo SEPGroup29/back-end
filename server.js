@@ -35,3 +35,4 @@ app.use('/auth', require('./routes/auth'))
 
 //API routes
 app.use('/api/vehicle-owner', require('./routes/api/vehicle_owner'))
+app.use('/api/fuel-station', require('./routes/api/fuel_station'))
