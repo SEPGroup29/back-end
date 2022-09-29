@@ -83,14 +83,6 @@ const deleteVehicle = async (req, res) => {
     }
 }
 
-// const getVehicleTypes = async (req, res) => {
-//     try {
-//         const typesd= await VehicleTypes.
-//     } catch (error) {
-
-//     }
-// }
-
 module.exports = {
     addVehicle,
     showVehicles,
