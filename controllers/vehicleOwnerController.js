@@ -29,7 +29,10 @@ const addVehicle = async (req, res) => {
                         if (result) {
                             //Enter to database
                             try {
-                                const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: NIC })
+                                const vo = await VehicleOwner.findOne({ NIC})
+                                // console.log('vo._id')
+                                // console.log(vo._id)
+                                const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: vo.id })
                                 res.status(200).json(vehicle)
                             } catch (error) {
                                 res.status(400).json({ error: error.message })
@@ -54,26 +57,31 @@ const addVehicle = async (req, res) => {
 const showVehicles = async (req, res) => {
     try {
         const NIC = '123456789V'
-        const vehicles = await Vehicle.find({ vehicleOwnerId:NIC })
-        console.log(vehicles)
+
+        //Get vehicle owner id
+        const vo = await VehicleOwner.findOne({ NIC})
+
+        const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
+        res.status(200).json(vehicles)
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
 
-// const deleteVehicle = async (req, res) => {
-//     const { id } = req.body
-//     try {
-//         const vehicle = await Vehicle.findOneAndDelete({ _id: id })
-//         if (vehicle) {
-//             res.status(200).json({ success: 'Deleted' })
-//         } else {
-//             res.status(200).json({ error: 'Vehicle does not exisis' })
-//         }
-//     } catch (error) {
-//         res.status(400).json({ error: error.message })
-//     }
-// }
+const deleteVehicle = async (req, res) => {
+    const { vehicle_id } = req.params
+    console.log(vehicle_id)
+    try {
+        const vehicle = await Vehicle.findOneAndDelete({ _id: vehicle_id })
+        if (vehicle) {
+            res.status(200).json({ success: 'Deleted' })
+        } else {
+            res.status(200).json({ error: 'Vehicle does not exisis' })
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
 
 // const getVehicleTypes = async (req, res) => {
 //     try {
@@ -86,4 +94,5 @@ const showVehicles = async (req, res) => {
 module.exports = {
     addVehicle,
     showVehicles,
+    deleteVehicle,
 }

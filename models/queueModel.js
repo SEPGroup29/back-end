@@ -7,7 +7,7 @@ const queueSchema = new Schema({
         required: true
     },
     fuelStationId: {
-            type: Schema.Types.String, ref: 'FuelStation'
+            type: Schema.Types.ObjectId, ref: 'FuelStation'
     }
 })
 
