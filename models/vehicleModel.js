@@ -11,20 +11,20 @@ const vehicleSchema = new Schema({
         required: true
     },
     vehicleType: {
-        type: Schema.Types.String, ref: 'VehicleTypes'
+        type: Schema.Types.ObjectId, ref: 'VehicleTypes'
     },
     fuelType: {
         type: String,
         required: true
     },
     vehicleOwnerId: {
-        type: Schema.Types.String, ref: 'VehicleOwner'
+        type: Schema.Types.ObjectId, ref: 'VehicleOwner'
     },
     queuePosition: {
         type: Number,
     },
     queueId: {
-        type: Schema.Types.String, ref: 'Vehicle'
+        type: Schema.Types.ObjectId, ref: 'Queue'
     }
 })
 

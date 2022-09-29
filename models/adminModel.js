@@ -15,7 +15,7 @@ const adminSchema = new Schema({
         required: true
     },
     userType:{
-        type: Schema.Types.String, ref: 'UserTypes'
+        type: Schema.Types.ObjectId, ref: 'UserTypes'
     }
 })
 
