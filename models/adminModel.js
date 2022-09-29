@@ -13,6 +13,9 @@ const adminSchema = new Schema({
     password:{
         type: String,
         required: true
+    },
+    userType:{
+        type: Schema.Types.String, ref: 'UserTypes'
     }
 })
 

@@ -21,6 +21,9 @@ const fuelStationManagerSchema = new Schema({
     fuelStationId: {
         type: Schema.Types.String, ref: 'FuelStation'
     },
+    userType:{
+        type: Schema.Types.String, ref: 'UserTypes'
+    }
 })
 
 const fuelStationManager = mongoose.model('FuelStationManager', fuelStationManagerSchema);
