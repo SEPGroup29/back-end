@@ -83,8 +83,19 @@ const deleteVehicle = async (req, res) => {
     }
 }
 
+const showAllVehicleOwners = async (req, res) => {
+    try {
+        const vehicleOwners = await VehicleOwner.find().sort({name:1}) 
+        console.log(vehicleOwners);
+        // res.status(200).json({vehicleOwners, result: 'success'});
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 module.exports = {
     addVehicle,
     showVehicles,
     deleteVehicle,
+    showAllVehicleOwners,
 }
