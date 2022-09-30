@@ -1,12 +1,17 @@
 const mongoose = require('mongoose');
 const VehicleOwner = require('../models/vehicleOwnerModel')
 const Admin = require('../models/adminModel');
-const FuelStationManager = require('../models/fuelStationManagerModal')
+const Manager = require('../models/fuelStationManagerModal')
 const PumpOperator = require('../models/pumpOperatorModel');
 const {generateOTP}  = require('../services/otp');
 const {sendRegOtpMail} = require('../services/mail/reg_otp_mail');
 const {sendRegSuccessMail} = require('../services/mail/reg_success_mail');
 const {sendLoginOtpMail} = require('../services/mail/login_otp_mail');
+const jwt = require('jsonwebtoken')
+
+const createToken = (_id) => {
+  return jwt.sign({_id}, process.env.SECRET, { expiresIn: '3d' })
+}
 
 // functions 
 
@@ -114,18 +119,67 @@ const handleLoginFuelStation = async (req, res) => {
 }
 
 const handleAdminLogin = async (req, res) => {
-    const { email, password } = req.body;
+    const {email, password} = req.body
+
     try {
-        const result = await Admin.findOne({ email, password });
-        if (result) {
-            res.status(200).json({ result: 'Login success' })
-        } else {
-            res.status(200).json({ result: 'Invalid credentials' })
-        }
+      const result = await Admin.login(email, password)
+  
+      if(!result.error){
+        const token = createToken(result._id)
+        res.status(200).json({email, token, result: 'Logged in'})
+      } else{
+        res.status(200).json({error: result.error})
+      }
+
     } catch (error) {
-        res.status(400).json({ error: error.message })
+      res.status(400).json({error: error.message})
     }
 }
+
+const handleAdminSignup = async (req, res) => {
+    const {email, password} = req.body
+
+    try {
+      const user = await Admin.signup(email, password)
+  
+      res.status(200).json({user})
+    } catch (error) {
+      res.status(400).json({error: error.message})
+    }
+}
+
+//-----------------------
+
+const handleManagerLogin = async (req, res) => {
+    const {email, password} = req.body
+
+    try {
+        const result = await Manager.login(email, password)
+    
+        if(!result.error){
+          const token = createToken(result._id)
+          res.status(200).json({email, token, result: 'Logged in'})
+        } else{
+          res.status(200).json({error: result.error})
+        }
+  
+      } catch (error) {
+        res.status(400).json({error: error.message})
+      }
+}
+
+const handleManagerSignup = async (req, res) => {
+    const {firstName, lastName, contactNumber, email, password, fuelStationId } = req.body
+
+    try {
+      const user = await Manager.signup(firstName, lastName, contactNumber, email, password, fuelStationId)
+  
+      res.status(200).json({user})
+    } catch (error) {
+      res.status(400).json({error: error.message})
+    }
+}
+
 
 const handleLogout = async (req, res) => {
 
@@ -138,5 +192,8 @@ module.exports = {
     handleLoginFuelStation,
     handleLogout,
     handleLoginAfterOTP,
-    handleAdminLogin
+    handleAdminLogin,
+    handleAdminSignup,
+    handleManagerLogin,
+    handleManagerSignup
 }

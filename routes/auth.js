@@ -8,5 +8,9 @@ router
     .post('/register', authController.handleRegister)
     .post('/login-otp', authController.handleLoginAfterOTP)
     .post('/login-admin', authController.handleAdminLogin)
+    .post('/register-admin', authController.handleAdminSignup)
+    .post('/register-manager', authController.handleManagerSignup)
+    .post('/login-manager', authController.handleManagerLogin)
+
 
 module.exports = router;
