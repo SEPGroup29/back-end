@@ -25,8 +25,11 @@ const fuelStationManagerSchema = new Schema({
         required: true
     },
     fuelStationId: {
-        type: Schema.Types.String, ref: 'FuelStation'
+        type: Schema.Types.ObjectId, ref: 'FuelStation'
     },
+    userType:{
+        type: Schema.Types.ObjectId, ref: 'UserTypes'
+    }
 })
 
 // static signup method

@@ -5,6 +5,7 @@ const vehicleOwnerController = require('../../controllers/vehicleOwnerController
 router
     .post('/add-vehicle', vehicleOwnerController.addVehicle)
     .get('/show-vehicles', vehicleOwnerController.showVehicles)
-    // .delete('/delete-vehicle', vehicleOwnerController.deleteVehicle)
+    .delete('/delete-vehicle/:vehicle_id', vehicleOwnerController.deleteVehicle)
+    .get('/show-all-vehicle-owners', vehicleOwnerController.showAllVehicleOwners)
 
 module.exports = router;

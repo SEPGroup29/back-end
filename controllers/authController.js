@@ -9,14 +9,17 @@ const {sendRegSuccessMail} = require('../services/mail/reg_success_mail');
 const {sendLoginOtpMail} = require('../services/mail/login_otp_mail');
 const jwt = require('jsonwebtoken')
 
-const createToken = (_id) => {
-  return jwt.sign({_id}, process.env.SECRET, { expiresIn: '3d' })
-}
-
 // functions 
 
 let generated_otp
 let entered_email 
+
+const createToken = (id,userType) => {
+    return jwt.sign({id, userType}, 'FuelQ secret',{
+        expiresIn: maxValidity
+    });
+}
+
 // Check already exisiting email
 const handleEmailExistance = async (req, res) => {
     console.log('insideemailexistence')
