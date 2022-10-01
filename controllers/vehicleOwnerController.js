@@ -11,9 +11,9 @@ const addVehicle = async (req, res) => {
     //Check for vehicle count
     try {
         const NIC = '123456789V'    // Should get current user's nic
-        const vehicles = await Vehicle.find({ NIC })
-        console.log(vehicles.length)
-        if (vehicles.length === 3) {
+        const vo = await VehicleOwner.findOne({ NIC })
+        const vehicle_count = await Vehicle.find({ vehicleOwnerId: vo._id }).count()
+        if (vehicle_count === 3) {
             res.status(200).json({ error: 'Vehicle limit reached' })
         }
         else {
@@ -29,7 +29,6 @@ const addVehicle = async (req, res) => {
                         if (result) {
                             //Enter to database
                             try {
-                                const vo = await VehicleOwner.findOne({ NIC})
                                 // console.log('vo._id')
                                 // console.log(vo._id)
                                 const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: vo.id })
@@ -58,8 +57,8 @@ const showVehicles = async (req, res) => {
     try {
         const NIC = '123456789V'
 
-        //Get vehicle owner id
-        const vo = await VehicleOwner.findOne({ NIC})
+        //Get vehicle owner
+        const vo = await VehicleOwner.findOne({ NIC })
 
         const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
         res.status(200).json(vehicles)
@@ -85,9 +84,9 @@ const deleteVehicle = async (req, res) => {
 
 const showAllVehicleOwners = async (req, res) => {
     try {
-        const vehicleOwners = await VehicleOwner.find().sort({name:1}) 
+        const vehicleOwners = await VehicleOwner.find().sort({name:1}).populate('user') 
         console.log(vehicleOwners);
-        // res.status(200).json({vehicleOwners, result: 'success'});
+        res.status(200).json({vehicleOwners, result: 'success'});
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
