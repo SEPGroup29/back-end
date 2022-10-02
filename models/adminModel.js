@@ -3,33 +3,28 @@ const bcrypt = require('bcrypt')
 const Schema = mongoose.Schema;
 
 const adminSchema = new Schema({
-    email:{
-        type: String,
-        required: true,
-        unique: true
+    user: {
+      type: Schema.Types.ObjectId, ref: 'User'
     },
     password:{
         type: String,
         required: true
-    },
-    userType:{
-        type: Schema.Types.ObjectId, ref: 'UserTypes'
     }
 })
 
 // static signup method
-adminSchema.statics.signup = async function(email, password) {
+adminSchema.statics.signup = async function(email, password, userType) {
 
     //validation
-    if (!email || !password) {
-      return({error:'All fields must be filled'})
-    }
-    if (!validator.isEmail(email)) {
-      return({error:'Email not valid'})
-    }
-    if (!validator.isStrongPassword(password)) {
-      return({error:'Password not strong enough'})
-    }
+    // if (!email || !password) {
+    //   return({error:'All fields must be filled'})
+    // }
+    // if (!validator.isEmail(email)) {
+    //   return({error:'Email not valid'})
+    // }
+    // if (!validator.isStrongPassword(password)) {
+    //   return({error:'Password not strong enough'})
+    // }
   
     const exists = await this.findOne({ email })
   
@@ -40,7 +35,7 @@ adminSchema.statics.signup = async function(email, password) {
     const salt = await bcrypt.genSalt(10)
     const hash = await bcrypt.hash(password, salt)
   
-    const admin = await this.create({ email, password: hash })
+    const admin = await this.create({ email, password: hash, userType: userType._id })
   
     return admin
   }
@@ -52,7 +47,7 @@ adminSchema.statics.login = async function(email, password) {
       return({error:'All fields must be filled'})
     }
   
-    const admin = await this.findOne({ email })
+    const admin = await this.findOne({ email }).populate('userType')
     if (!admin) {
       return({error: 'Incorrect email'})
     }
