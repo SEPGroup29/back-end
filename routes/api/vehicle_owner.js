@@ -7,5 +7,6 @@ router
     .get('/show-vehicles', vehicleOwnerController.showVehicles)
     .delete('/delete-vehicle/:vehicle_id', vehicleOwnerController.deleteVehicle)
     .get('/show-all-vehicle-owners', vehicleOwnerController.showAllVehicleOwners)
+    .get('/get-vehicle-owner-name', vehicleOwnerController.getVehicleOwnerName)
 
 module.exports = router;

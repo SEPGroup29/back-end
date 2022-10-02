@@ -1,6 +1,7 @@
 const Vehicle = require("../models/vehicleModel")
 const VehicleOwner = require("../models/vehicleOwnerModel")
 const VehicleTypes = require("../models/vehicleTypesModel")
+const User = require("../models/userModel")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -92,9 +93,23 @@ const showAllVehicleOwners = async (req, res) => {
     }
 }
 
+const getVehicleOwnerName = async (req, res) => {
+    const NIC = '123456789V'
+    try{
+        const vo = await VehicleOwner.findOne({ NIC })
+        const user = await User.findOne({_id : vo.user})
+        const name = user.firstName
+        res.status(200).json({ name , result:"success"})
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+    }
+
 module.exports = {
     addVehicle,
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
+    getVehicleOwnerName
 }
