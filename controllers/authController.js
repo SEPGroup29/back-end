@@ -28,8 +28,10 @@ const handleEmailExistance = async (req, res) => {
             const { result, mail_status } = await generateAndSendOtp(email)
             if (result && mail_status)
                 res.status(200).json({ result: 'Sent' })
-            else
+            else{
                 res.status(200).json({ result: 'OTP generation error' })
+                console.log("Else")
+            }
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -54,7 +56,7 @@ const handleRegister = async (req, res) => {
                     const vehicleOwner = await VehicleOwner.create({ user: user._id, NIC })
                     const mail_status = await sendRegSuccessMail({ to: email });
 
-                    //Deleting otp entry from otp collection
+                    //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
                     const otp = await OTP.deleteMany({ email })
 
                     res.status(200).json({ user, vehicleOwner })
@@ -65,7 +67,7 @@ const handleRegister = async (req, res) => {
                 res.status(200).json({ error: 'Invalid OTP' })
             }
         } else {
-            res.status(200).json({ error: 'Email mismatch' })
+            res.status(200).json({ error: 'Invalid OTP' })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -85,7 +87,7 @@ const handleLoginVehicleOwner = async (req, res) => {
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
             const { result, mail_status } = await generateAndSendOtp(email)
             if (result && mail_status)
-                // res.status(200).json({ result: 'Sent' })
+                // res.status(200).json({ result: 'Sent' }) 
                 res.status(200).json({ result });
             else
                 res.status(200).json({ result: 'OTP generation error' })
@@ -300,10 +302,6 @@ const handleNewAccessToken = async (req, res) => {
 const generateAndSendOtp = async (email) => {
     const otp = generateOTP();
     const result = await OTP.create({ email, otp })
-    // OTP reset after 1min timeout
-    // setTimeout(() => {
-    //     generated_otp = null
-    // }, 60000)
     const mail_status = await sendRegOtpMail({ to: email, OTP: otp });
     return ({ result, mail_status })
 }
