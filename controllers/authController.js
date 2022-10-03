@@ -28,8 +28,10 @@ const handleEmailExistance = async (req, res) => {
             const { result, mail_status } = await generateAndSendOtp(email)
             if (result && mail_status)
                 res.status(200).json({ result: 'Sent' })
-            else
+            else {
                 res.status(200).json({ result: 'OTP generation error' })
+                console.log("Else")
+            }
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -54,7 +56,7 @@ const handleRegister = async (req, res) => {
                     const vehicleOwner = await VehicleOwner.create({ user: user._id, NIC })
                     const mail_status = await sendRegSuccessMail({ to: email });
 
-                    //Deleting otp entry from otp collection
+                    //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
                     const otp = await OTP.deleteMany({ email })
 
                     res.status(200).json({ user, vehicleOwner })
@@ -65,7 +67,7 @@ const handleRegister = async (req, res) => {
                 res.status(200).json({ error: 'Invalid OTP' })
             }
         } else {
-            res.status(200).json({ error: 'Email mismatch' })
+            res.status(200).json({ error: 'Invalid OTP' })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -85,8 +87,8 @@ const handleLoginVehicleOwner = async (req, res) => {
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
             const { result, mail_status } = await generateAndSendOtp(email)
             if (result && mail_status)
-                // res.status(200).json({ result: 'Sent' })
-                res.status(200).json({ result });
+                // res.status(200).json({ result: 'Sent' }) 
+                res.status(200).json({ result: 'sent' });
             else
                 res.status(200).json({ result: 'OTP generation error' })
         } else {
@@ -99,31 +101,42 @@ const handleLoginVehicleOwner = async (req, res) => {
 }
 
 const handleLoginAfterOTP = async (req, res) => {
-    const { entered_otp } = req.body
-    // OTP check
-    if (entered_otp === generated_otp) {
-        try {
-            const result = await VehicleOwner.findOne({ entered_email });
-            if (result) {
+    const { email, entered_otp } = req.body
+    try {
+        const otp = await OTP.findOne({ email })
+        if (otp) {
+            // OTP check
+            if (entered_otp === otp.otp) {
+                // const result = await VehicleOwner.findOne({ email });
+                // if (result) {
 
-                const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
+                //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
 
-                // Saving refresh token in database
-                const updatedAdmin = await Admin.updateOne({ entered_email }, { refreshToken: refresh_token })
+                //     // Saving refresh token in database
+                //     const updatedAdmin = await Admin.updateOne({ entered_email }, { refreshToken: refresh_token })
 
-                // Set to cookie
-                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+                //     // Set to cookie
+                //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
-                return res.status(200).json({
-                    "message": "Login successful",
-                    "access_token": access_token
-                });
+                //     return res.status(200).json({
+                //         "message": "Login successful",
+                //         "access_token": access_token
+                //     });
+                // }
+                const user = await User.findOne({ email });
+
+                //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
+                const delOtp = await OTP.deleteMany({ email })
+
+                res.status(200).json({ user })
+            } else {
+                res.status(400).json({ error: 'Invalid OTP' })
             }
-        } catch (error) {
-            res.status(400).json({ error: error.message })
+        } else {
+            res.status(400).json({ error: 'Invalid OTP' })
         }
-    } else {
-        res.status(400).json({ error: 'Invalid OTP' })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
     }
 }
 
@@ -131,27 +144,37 @@ const handleAdminLogin = async (req, res) => {
     const { email, password } = req.body
 
     try {
-        const result = await Admin.login(email, password)
-        console.log(result)
+        const user = await User.findOne({ email }).populate('userType');
+        if (user && user.userType.id == process.env.ADMIN) {
+            const admin = await Admin.findOne({ user: user._id })
+            console.log(user);
+            console.log(admin);
+            const match = await bcrypt.compare(password, admin.password)
+            if (match) {
+                res.status(200).json({ user, admin })
+            } else {
+                res.status(200).json({ error: 'Incorrect Password' })
+            }
+            // if (!result.error) {
 
-        if (!result.error) {
+            //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
 
-            const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
+            //     // Saving refresh token in database
+            //     const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
 
-            // Saving refresh token in database
-            const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
+            //     // Set to cookie
+            //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
-            // Set to cookie
-            res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
-            return res.status(200).json({
-                "message": "Login successful",
-                "access_token": access_token
-            });
+            //     return res.status(200).json({
+            //         "message": "Login successful",
+            //         "access_token": access_token
+            //     });
+            // } else {
+            //     res.status(200).json({ error: result.error })
+            // }
         } else {
-            res.status(200).json({ error: result.error })
+            res.status(200).json({ error: 'Email not found' })
         }
-
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -186,24 +209,39 @@ const handleManagerLogin = async (req, res) => {
     const { email, password } = req.body
 
     try {
-        const result = await Manager.login(email, password)
+        const user = await User.findOne({ email }).populate('userType');
+        console.log(user);
+        if (user && user.userType.id == process.env.FUEL_STATION_MANAGER) {
+            const manager = await Manager.findOne({ user: user._id })
+            console.log(manager);
+            const match = await bcrypt.compare(password, manager.password)
+            if (match) {
+                res.status(200).json({ user, manager })
+            } else {
+                res.status(200).json({ error: 'Incorrect Password' })
+            }
+            // if (!result.error) {
+            //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
 
-        if (!result.error) {
-            const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
+            //     // Saving refresh token in database
+            //     const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
 
-            // Saving refresh token in database
-            const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
+            //     // Set to cookie
+            //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
-            // Set to cookie
-            res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
-            return res.status(200).json({
-                "message": "Login successful",
-                "access_token": access_token
-            });
+            //     return res.status(200).json({
+            //         "message": "Login successful",
+            //         "access_token": access_token
+            //     });
+            // } else {
+            //     res.status(200).json({ error: result.error })
+            // }
         } else {
-            res.status(200).json({ error: result.error })
+            console.log("ELSE");
+            res.status(200).json({ error: 'Email not found' })
         }
+
+
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -222,7 +260,7 @@ const handleManagerSignup = async (req, res) => {
             // Password encryption
             const salt = await bcrypt.genSalt(10)
             const hash = await bcrypt.hash(password, salt)
-            
+
             // Enter to database
             const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
             const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
@@ -300,10 +338,6 @@ const handleNewAccessToken = async (req, res) => {
 const generateAndSendOtp = async (email) => {
     const otp = generateOTP();
     const result = await OTP.create({ email, otp })
-    // OTP reset after 1min timeout
-    // setTimeout(() => {
-    //     generated_otp = null
-    // }, 60000)
     const mail_status = await sendRegOtpMail({ to: email, OTP: otp });
     return ({ result, mail_status })
 }
