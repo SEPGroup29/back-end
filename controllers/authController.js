@@ -10,6 +10,7 @@ const FuelStation = require('../models/fuelStationModel')
 const { generateOTP } = require('../services/otp');
 const { sendRegOtpMail } = require('../services/mail/reg_otp_mail');
 const { sendRegSuccessMail } = require('../services/mail/reg_success_mail');
+const {sendLoginOtpMail } = require('../services/mail/login_otp_mail');
 const jwt = require('jsonwebtoken')
 const token = require('../utils/token');
 require('dotenv').config();
@@ -25,7 +26,7 @@ const handleEmailExistance = async (req, res) => {
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
             res.status(200).json({ result: 'Email already exists' })
         } else {
-            const { result, mail_status } = await generateAndSendOtp(email)
+            const { result, mail_status } = await generateAndSendOtp(email, 'Registration')
             if (result && mail_status)
                 res.status(200).json({ result: 'Sent' })
             else {
@@ -85,7 +86,7 @@ const handleLoginVehicleOwner = async (req, res) => {
     try {
         const user = await User.findOne({ email }).populate('userType');
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
-            const { result, mail_status } = await generateAndSendOtp(email)
+            const { result, mail_status } = await generateAndSendOtp(email, 'Login')
             if (result && mail_status)
                 // res.status(200).json({ result: 'Sent' }) 
                 res.status(200).json({ result: 'sent' });
@@ -130,10 +131,10 @@ const handleLoginAfterOTP = async (req, res) => {
 
                 res.status(200).json({ user })
             } else {
-                res.status(400).json({ error: 'Invalid OTP' })
+                res.status(200).json({ error: 'Invalid OTP' })
             }
         } else {
-            res.status(400).json({ error: 'Invalid OTP' })
+            res.status(200).json({ error: 'Invalid OTP' })
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -335,10 +336,20 @@ const handleNewAccessToken = async (req, res) => {
 // ....................HELPER FUNCTIONS..........................
 
 // Generate and send OTP
-const generateAndSendOtp = async (email) => {
+const generateAndSendOtp = async (email, type) => {
     const otp = generateOTP();
     const result = await OTP.create({ email, otp })
-    const mail_status = await sendRegOtpMail({ to: email, OTP: otp });
+    let mail_status
+    switch (type) {
+        case 'Registration':
+            mail_status = await sendRegOtpMail({ to: email, OTP: otp });
+            break;
+        case 'Login':
+            mail_status = await sendLoginOtpMail({ to: email, OTP: otp });
+            break;
+        default:
+            break;
+    }
     return ({ result, mail_status })
 }
 
