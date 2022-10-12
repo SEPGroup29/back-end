@@ -10,11 +10,13 @@ const FuelStation = require('../models/fuelStationModel')
 const { generateOTP } = require('../services/otp');
 const { sendRegOtpMail } = require('../services/mail/reg_otp_mail');
 const { sendRegSuccessMail } = require('../services/mail/reg_success_mail');
-const {sendLoginOtpMail } = require('../services/mail/login_otp_mail');
+const { sendLoginOtpMail } = require('../services/mail/login_otp_mail');
 const jwt = require('jsonwebtoken')
 const token = require('../utils/token');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
+const ObjectId = require('mongoose').Types.ObjectId;
+
 
 // Functions 
 
@@ -91,7 +93,7 @@ const handleLoginVehicleOwner = async (req, res) => {
                 // res.status(200).json({ result: 'Sent' }) 
                 res.status(200).json({ result: 'sent' });
             else
-                res.status(200).json({ result: 'OTP generation error' })
+                res.status(200).json({ error: 'OTP generation error' })
         } else {
             res.status(200).json({ error: 'Email not found' })
         }
@@ -278,6 +280,41 @@ const handleManagerSignup = async (req, res) => {
     }
 }
 
+const handlePumpOperatorSignup = async (req, res) => {
+    const { email, firstName, lastName, contactNumber, password, fuelStationId } = req.body
+
+    try {
+        // Check for existance
+        const user = await User.findOne({ email }).populate('userType');
+        if (user && user.userType.id == process.env.PUMP_OPERATOR) {
+            res.status(200).json({ error: 'Email already exists' })
+        } else {
+            // Check fuel station
+            if (ObjectId.isValid(fuelStationId)) {
+                const fs = await FuelStation.findOne({ _id: fuelStationId })
+                if (fs) {
+                    // Password encryption
+                    const salt = await bcrypt.genSalt(10)
+                    const hash = await bcrypt.hash(password, salt)
+
+                    // Enter to database
+                    const userType = await UserTypes.findOne({ id: process.env.PUMP_OPERATOR })
+                    const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
+                    const user = await User.create({ email: email, firstName, lastName, loginType: login._id, userType: userType._id })
+                    const operator = await PumpOperator.create({ user: user._id, contactNumber, password: hash, fuelStationId })
+                    res.status(200).json({ user, operator })
+                } else {
+                    res.status(200).json({ error: 'Fuel station not found' })
+                }
+            } else {
+                res.status(200).json({ error: 'Fuel station not found' })
+            }
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
 const handleLogout = async (req, res) => {
 
 }
@@ -380,5 +417,6 @@ module.exports = {
     handleAdminSignup,
     handleManagerLogin,
     handleManagerSignup,
+    handlePumpOperatorSignup,
     handleNewAccessToken
 }

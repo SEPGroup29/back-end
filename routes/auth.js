@@ -11,6 +11,6 @@ router
     .post('/register-admin', authController.handleAdminSignup)
     .post('/register-manager', authController.handleManagerSignup)
     .post('/login-manager', authController.handleManagerLogin)
-
+    .post('/register-po', authController.handlePumpOperatorSignup)
 
 module.exports = router;
