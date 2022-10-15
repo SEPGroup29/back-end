@@ -13,5 +13,6 @@ router
     .post('/register-manager', authController.handleManagerSignup)
     .post('/login-pump-operator', authController.handlePumpOperatorLogin)
     .post('/register-po', authController.handlePumpOperatorSignup)
+    .post('/new-token', authController.handleNewAccessToken)
 
 module.exports = router;
