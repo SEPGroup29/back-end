@@ -110,28 +110,24 @@ const handleLoginAfterOTP = async (req, res) => {
         if (otp) {
             // OTP check
             if (entered_otp === otp.otp) {
-                // const result = await VehicleOwner.findOne({ email });
-                // if (result) {
+                const user = await User.findOne({ email }).populate('userType');
+                if (user) {
+                    const { authObject, access_token, refresh_token } = await getLoginData(user, email)
 
-                //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
+                    // Set to cookie
+                    res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
-                //     // Saving refresh token in database
-                //     const updatedAdmin = await Admin.updateOne({ entered_email }, { refreshToken: refresh_token })
+                    //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
+                    const delOtp = await OTP.deleteMany({ email })
 
-                //     // Set to cookie
-                //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
-                //     return res.status(200).json({
-                //         "message": "Login successful",
-                //         "access_token": access_token
-                //     });
-                // }
-                const user = await User.findOne({ email });
-
-                //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
-                const delOtp = await OTP.deleteMany({ email })
-
-                res.status(200).json({ user })
+                    return res.status(200).json({
+                        message: "Login successful",
+                        auth_object: authObject,
+                        access_token
+                    });
+                } else {
+                    res.status(200).json({ error: 'User not found' })
+                }
             } else {
                 res.status(200).json({ error: 'Invalid OTP' })
             }
@@ -150,31 +146,24 @@ const handleAdminLogin = async (req, res) => {
         const user = await User.findOne({ email }).populate('userType');
         if (user && user.userType.id == process.env.ADMIN) {
             const admin = await Admin.findOne({ user: user._id })
-            console.log(user);
-            console.log(admin);
+            // console.log(user);
+            // console.log(admin);
             const match = await bcrypt.compare(password, admin.password)
             if (match) {
-                res.status(200).json({ user, admin })
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+                console.log({ authObject, access_token, refresh_token });
+
+                // Set to cookie
+                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+
+                res.status(200).json({
+                    message: "Login successful",
+                    auth_object: authObject,
+                    access_token
+                });
             } else {
                 res.status(200).json({ error: 'Incorrect Password' })
             }
-            // if (!result.error) {
-
-            //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
-
-            //     // Saving refresh token in database
-            //     const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
-
-            //     // Set to cookie
-            //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
-            //     return res.status(200).json({
-            //         "message": "Login successful",
-            //         "access_token": access_token
-            //     });
-            // } else {
-            //     res.status(200).json({ error: result.error })
-            // }
         } else {
             res.status(200).json({ error: 'Email not found' })
         }
@@ -213,34 +202,24 @@ const handleManagerLogin = async (req, res) => {
 
     try {
         const user = await User.findOne({ email }).populate('userType');
-        console.log(user);
         if (user && user.userType.id == process.env.FUEL_STATION_MANAGER) {
             const manager = await Manager.findOne({ user: user._id })
-            console.log(manager);
             const match = await bcrypt.compare(password, manager.password)
             if (match) {
-                res.status(200).json({ user, manager })
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+
+                // Set to cookie
+                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+
+                res.status(200).json({
+                    message: "Login successful",
+                    auth_object: authObject,
+                    access_token
+                });
             } else {
                 res.status(200).json({ error: 'Incorrect Password' })
             }
-            // if (!result.error) {
-            //     const { authObject, access_token, refresh_token } = createAndSaveTokens(result)
-
-            //     // Saving refresh token in database
-            //     const updatedAdmin = await Admin.updateOne({ email }, { refreshToken: refresh_token })
-
-            //     // Set to cookie
-            //     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
-            //     return res.status(200).json({
-            //         "message": "Login successful",
-            //         "access_token": access_token
-            //     });
-            // } else {
-            //     res.status(200).json({ error: result.error })
-            // }
         } else {
-            console.log("ELSE");
             res.status(200).json({ error: 'Email not found' })
         }
 
@@ -275,6 +254,39 @@ const handleManagerSignup = async (req, res) => {
         // const fuelStation = await FuelStation.findById(fuelStationId)
         // const user = await Manager.signup(firstName, lastName, contactNumber, email, password, fuelStation, userType)
         // res.status(200).json({ user })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+const handlePumpOperatorLogin = async (req, res) => {
+    const { email, password } = req.body
+
+    try {
+        const user = await User.findOne({ email }).populate('userType');
+        if (user && user.userType.id == process.env.PUMP_OPERATOR) {
+            const pumpOperator = await PumpOperator.findOne({ user: user._id })
+            const match = await bcrypt.compare(password, pumpOperator.password)
+            if (match) {
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+
+                // Set to cookie
+                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+
+                res.status(200).json({
+                    message: "Login successful",
+                    auth_object: authObject,
+                    access_token
+                });
+            } else {
+                res.status(200).json({ error: 'Incorrect Password' })
+            }
+        } else {
+            res.status(200).json({ error: 'Email not found' })
+        }
+
+
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -324,7 +336,6 @@ const handleNewAccessToken = async (req, res) => {
     console.log("requesting new access token");
 
     const cookies = req.cookies;
-    // const cookies = req.cookies;
     console.log("cookiee value :", cookies);
 
 
@@ -334,23 +345,19 @@ const handleNewAccessToken = async (req, res) => {
         return res.status(401).json({ "message": "Invalid token" });
     }
 
-    const refresh_token = cookies.jwt;
+    const refreshToken = cookies.jwt;
 
-    // const auth = await prisma.Auth.findUnique({
-    //     where: {
-    //         refresh_token
-    //     }
-    // });
+    const auth = await User.find({ refreshToken }).populate('userType')
 
     if (!auth) {
-        console.log("invalid refresh token :", refresh_token);
+        console.log("invalid refresh token :", refreshToken);
         return res.status(403).json({ "message": "Invalid token" });
     }
 
-    const authObject = await getAuthObject(auth);
+    const authObject = getAuthObject(auth);
 
     jwt.verify(
-        refresh_token,
+        refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
         (err, decoded) => {
             console.log('decoded ', decoded);
@@ -370,7 +377,8 @@ const handleNewAccessToken = async (req, res) => {
         })
 }
 
-// ....................HELPER FUNCTIONS..........................
+
+// .......................................HELPER FUNCTIONS...................................................
 
 // Generate and send OTP
 const generateAndSendOtp = async (email, type) => {
@@ -393,7 +401,7 @@ const generateAndSendOtp = async (email, type) => {
 // Get JWT auth object
 const getAuthObject = (auth) => {
     return {
-        id: auth.id,
+        id: auth._id,
         user_type: auth.userType.type,
     }
 }
@@ -407,6 +415,20 @@ const createAndSaveTokens = (result) => {
     return ({ authObject, access_token, refresh_token })
 }
 
+// Get {authObject, access_token, refresh_token} at any user login
+const getLoginData = async (user, email) => {
+    const { authObject, access_token, refresh_token } = createAndSaveTokens(user)
+
+    // Saving refresh token in database
+    const result = await User.updateOne({ email }, { refreshToken: refresh_token })
+
+    return ({
+        authObject,
+        access_token,
+        refresh_token
+    })
+}
+
 module.exports = {
     handleEmailExistance,
     handleRegister,
@@ -417,6 +439,7 @@ module.exports = {
     handleAdminSignup,
     handleManagerLogin,
     handleManagerSignup,
+    handlePumpOperatorLogin,
     handlePumpOperatorSignup,
     handleNewAccessToken
 }
