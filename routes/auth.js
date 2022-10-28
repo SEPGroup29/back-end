@@ -9,8 +9,10 @@ router
     .post('/login-otp', authController.handleLoginAfterOTP)
     .post('/login-admin', authController.handleAdminLogin)
     .post('/register-admin', authController.handleAdminSignup)
-    .post('/register-manager', authController.handleManagerSignup)
     .post('/login-manager', authController.handleManagerLogin)
+    .post('/register-manager', authController.handleManagerSignup)
+    .post('/login-pump-operator', authController.handlePumpOperatorLogin)
     .post('/register-po', authController.handlePumpOperatorSignup)
+    .post('/new-token', authController.handleNewAccessToken)
 
 module.exports = router;
