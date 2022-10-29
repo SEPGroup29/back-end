@@ -197,7 +197,7 @@ const handleAdminSignup = async (req, res) => {
     }
 }
 
-const handleManagerLogin = async (req, res) => {
+const handleFsLogin = async (req, res) => {
     const { email, password } = req.body
 
     try {
@@ -212,14 +212,33 @@ const handleManagerLogin = async (req, res) => {
                 res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
                 res.status(200).json({
-                    message: "Login successful",
+                    message: "Manager Login successful",
                     auth_object: authObject,
                     access_token
                 });
             } else {
                 res.status(200).json({ error: 'Incorrect Password' })
             }
-        } else {
+        }
+        else if (user && user.userType.id == process.env.PUMP_OPERATOR) {
+            const po = await PumpOperator.findOne({ user: user._id })
+            const match = await bcrypt.compare(password, po.password)
+            if (match) {
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+
+                // Set to cookie
+                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+
+                res.status(200).json({
+                    message: "Pump Operator Login successful",
+                    auth_object: authObject,
+                    access_token
+                });
+            } else {
+                res.status(200).json({ error: 'Incorrect Password' })
+            }
+        }
+        else {
             res.status(200).json({ error: 'Email not found' })
         }
 
@@ -437,7 +456,7 @@ module.exports = {
     handleLoginAfterOTP,
     handleAdminLogin,
     handleAdminSignup,
-    handleManagerLogin,
+    handleFsLogin,
     handleManagerSignup,
     handlePumpOperatorLogin,
     handlePumpOperatorSignup,
