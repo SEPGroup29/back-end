@@ -68,9 +68,12 @@ const showVehicles = async (req, res) => {
 
         //Get vehicle owner
         const vo = await VehicleOwner.findOne({ NIC })
-
-        const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
-        res.status(200).json(vehicles)
+        if (vo) {
+            const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
+            res.status(200).json({vehicles})
+        } else {
+            res.status(200).json({ error: 'Vehicle owner not found' })
+        }
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
