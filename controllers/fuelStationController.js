@@ -13,17 +13,25 @@ const insertFuelStation = async (req, res) => {
 }
 
 const showAllFuelStations = async (req, res) => {
+    const { search } = req.params
+    console.log(search);
     try {
-        const stations = await FuelStation.find().sort({ name: 1 })
-        // console.log(stations);
-        res.status(200).json({ stations, result: 'success' });
+        if (search === 'null') {
+            var stations = await FuelStation.find().sort({ name: 1 })
+            console.log("IF")
+            res.status(200).json({ stations, result: 'success' });
+        } else {
+            console.log("ELSE")
+            var stations = await FuelStation.find({ name: { $regex: search, '$options' : 'i'} }).sort({ name: 1 })
+            res.status(200).json({ stations, result: 'success' });
+        }
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 }
 
 const getStock = async (req, res) => {
-    const {fs_id} = req.params
+    const { fs_id } = req.params
     if (ObjectId.isValid(fs_id)) {
         const station = await FuelStation.findOne({ _id: fs_id })
         if (station) {
