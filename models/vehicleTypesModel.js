@@ -9,6 +9,10 @@ const vehicleTypesSchema = new Schema({
     description:{
         type: String,
         required: true
+    },
+    fuelAllocation: {
+        type: Number,
+        required: true
     }
 
 })
