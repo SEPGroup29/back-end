@@ -2,19 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const vehicleOwnerSchema = new Schema({
+    user:{
+        type: Schema.Types.ObjectId, ref: 'User'
+    },
     NIC: {
-        type: String,
-        required: true
-    },
-    email:{
-        type: String,
-        required: true
-    },
-    firstName: {
-        type: String,
-        required: true
-    },
-    lastName: {
         type: String,
         required: true
     },
@@ -24,13 +15,9 @@ const vehicleOwnerSchema = new Schema({
     consumedDQ: {
         type: Number,
     },
-    vehicles: [
-        {type: Schema.Types.ObjectId, ref: 'Vehicle'}
-    ],
-    fuelQuota: [
-        {type: Schema.Types.ObjectId, ref: 'FuelQuota'}
-    ]
-
+    fuelQuota: {
+        type: Schema.Types.ObjectId, ref: 'FuelQuota'
+    }
 })
 
 const VehicleOwner = mongoose.model('VehicleOwner', vehicleOwnerSchema);

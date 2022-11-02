@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const registeredVehiclesSchema = new Schema({
     chassisNo: {
-        type: number,
+        type: String,
         required: true
     },
     regNo: {

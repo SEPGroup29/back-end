@@ -1,0 +1,4 @@
+{"id": 1, "type": "Admin"},
+{"id": 2, "type": "Vehicle-Owner"},
+{"id": 3, "type": "Fuel-Station-Manager"},
+{"id": 4, "type": "Pump-Operator"},
