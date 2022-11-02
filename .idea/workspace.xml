@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Get vehicle type implemented" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="get_vehicle_types_from_database" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="GithubPullRequestsUISettings">
+    <option name="recentNewPullRequestHead">
+      <RepoCoordinatesHolder>
+        <option name="owner" value="SEPGroup29" />
+        <option name="repository" value="back-end" />
+      </RepoCoordinatesHolder>
+    </option>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2FTHXxpGNSykbM2XFsUcYjoHtrJ" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/yasir&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="" />
+      <created>1664509197188</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1664509197188</updated>
+      <workItem from="1664509198562" duration="431000" />
+      <workItem from="1664509679265" duration="5793000" />
+      <workItem from="1664691748863" duration="5237000" />
+      <workItem from="1664716902098" duration="4102000" />
+      <workItem from="1664819881111" duration="606000" />
+      <workItem from="1664849821681" duration="2515000" />
+      <workItem from="1666529109955" duration="1597000" />
+      <workItem from="1666585185193" duration="9000" />
+      <workItem from="1666684085723" duration="941000" />
+      <workItem from="1666690732470" duration="1766000" />
+      <workItem from="1666858719104" duration="20000" />
+      <workItem from="1667194946290" duration="2087000" />
+      <workItem from="1667220344750" duration="584000" />
+      <workItem from="1667417014147" duration="794000" />
+    </task>
+    <task id="LOCAL-00001" summary="Vehicle Owner Name Get functionality added">
+      <created>1664733153798</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1664733153798</updated>
+    </task>
+    <task id="LOCAL-00002" summary="package-lock.json updated">
+      <created>1667196465698</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1667196465698</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Get vehicle type implemented">
+      <created>1667417633182</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1667417633182</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Vehicle Owner Name Get functionality added" />
+    <MESSAGE value="package-lock.json updated" />
+    <MESSAGE value="Get vehicle type implemented" />
+    <option name="LAST_COMMIT_MESSAGE" value="Get vehicle type implemented" />
+  </component>
+</project>
