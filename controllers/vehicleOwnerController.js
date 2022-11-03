@@ -4,7 +4,6 @@ const VehicleTypes = require("../models/vehicleTypesModel")
 const User = require("../models/userModel")
 const RegisteredVehicles = require("../models/registeredVehiclesModel")
 const FuelQuota = require("../models/fuelQuotaModel")
-const { log } = require("handlebars/runtime")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -126,7 +125,7 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
         if (preVehicles.length > 0) {
             //------- Algorithm----------
             const newVehicleQuota = vehicle.fuelAllocation
-            const currentQuota = fuelType === 'petrol' ? vo.fuelQuota.EPQ : vo.fuelQuota.EDQ 
+            const currentQuota = fuelType === 'petrol' ? vo.fuelQuota.EPQ : vo.fuelQuota.EDQ
             var newQuota
             switch (preVehicles.length) {
                 case 1:
@@ -134,11 +133,11 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
                     // console.log(parseFloat(currentQuota))
                     // console.log(parseFloat(newVehicleQuota)*5)
                     // console.log(parseFloat(preVehicles[0].vehicleType.fuelAllocation))
-                    newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation))*(60/100)
+                    newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100)
                     var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 case 2:
-                    newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation), parseFloat(preVehicles[1].vehicleType.fuelAllocation))*(60/100)
+                    newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation), parseFloat(preVehicles[1].vehicleType.fuelAllocation)) * (60 / 100)
                     var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 default:
@@ -147,12 +146,20 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
         } else {
             switch (fuelType) {
                 case 'petrol':
-                    var quota = await FuelQuota.create({ EPQ: vehicle.fuelAllocation })
-                    var vehicleOwner = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: quota._id })
+                    if (vo.fuelQuota) {
+                        var quota = await FuelQuota.findOneAndUpdate({ _id: vo.fuelQuota }, { EPQ: vehicle.fuelAllocation })
+                    } else {
+                        var quota = await FuelQuota.create({ EPQ: vehicle.fuelAllocation })
+                        var vehicleOwner = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: quota._id })
+                    }
                     break;
                 case 'diesel':
-                    var quota = await FuelQuota.create({ EDQ: vehicle.fuelAllocation })
-                    var vehicleOwner = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: quota._id })
+                    if (vo.fuelQuota) {
+                        var quota = await FuelQuota.findOneAndUpdate({ _id: vo.fuelQuota }, { EDQ: vehicle.fuelAllocation })
+                    } else {
+                        var quota = await FuelQuota.create({ EDQ: vehicle.fuelAllocation })
+                        var vehicleOwner = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: quota._id })
+                    }
                     break;
                 default:
                     break;
@@ -161,7 +168,7 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
         }
     } catch (error) {
         return false
-    } 
+    }
 }
 
 module.exports = {
