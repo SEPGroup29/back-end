@@ -117,6 +117,16 @@ const getVehicleOwnerName = async (req, res) => {
     }
 }
 
+const showOneVehicle = async (req, res) => {
+    const { regNo } = req.params
+    try {
+        const vehicle = await Vehicle.findOne({regNo})
+        res.status(200).json({ vehicle });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 // Fuel quota update after adding a new vehicle
 const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     try {
@@ -185,6 +195,7 @@ module.exports = {
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
-    getVehicleOwnerName,
+    getVehicleOwnerName, 
+    showOneVehicle,
     getVehicleTypes
 }
