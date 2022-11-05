@@ -70,7 +70,7 @@ const showVehicles = async (req, res) => {
         const vo = await VehicleOwner.findOne({ NIC })
         if (vo) {
             const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
-            res.status(200).json({vehicles})
+            res.status(200).json({ vehicles })
         } else {
             res.status(200).json({ error: 'Vehicle owner not found' })
         }
@@ -116,10 +116,21 @@ const getVehicleOwnerName = async (req, res) => {
     }
 }
 
+const showOneVehicle = async (req, res) => {
+    const { regNo } = req.params
+    try {
+        const vehicle = await Vehicle.findOne({regNo})
+        res.status(200).json({ vehicle });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 module.exports = {
     addVehicle,
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
-    getVehicleOwnerName
+    getVehicleOwnerName, 
+    showOneVehicle
 }
