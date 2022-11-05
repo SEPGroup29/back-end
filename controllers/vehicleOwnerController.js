@@ -179,6 +179,7 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     } catch (error) {
         return false
     }
+}
 
 const getVehicleTypes = async (req,res) => {
   try{
