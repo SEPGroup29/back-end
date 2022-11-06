@@ -41,7 +41,8 @@ function server() {
 
     // Test routes
     app.use('/test/vehicle-owner', require('./routes/test/vehicle_owner'))
-
+    app.use('/test/fuel-station', require('./routes/test/fuel_station'))
+    
     return app
 
 }
