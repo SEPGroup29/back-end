@@ -30,6 +30,16 @@ const showAllFuelStations = async (req, res) => {
     }
 }
 
+const showOneFuelStation = async(req,res) =>{
+    const{ name } = req.params
+    try{
+        const fs = await FuelStation.findOne({name})
+        res.status(200).json({ fs });
+    }catch(error){
+        res.status(400).json({error: error.message})
+    }
+}
+
 const getStock = async (req, res) => {
     const { fs_id } = req.params
     if (ObjectId.isValid(fs_id)) {
@@ -86,6 +96,7 @@ const updateStock = async (req, res) => {
 module.exports = {
     insertFuelStation,
     showAllFuelStations,
+    showOneFuelStation,
     getStock,
     updateStock,
 }

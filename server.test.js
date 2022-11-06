@@ -4,6 +4,7 @@ require('dotenv').config();
 const uri = process.env.MONGO_URI
 const Vehicle = require('./models/vehicleModel');
 const supertest = require("supertest");
+const FuelStation = require("./models/fuelStationModel");
 
 beforeEach((done) => {
     mongoose.connect(
@@ -35,5 +36,24 @@ test("GET /users", async () => {
         .then((response) => {
             // Check the response data
             expect(response.body.vehicle.regNo).toBe(vehicle.regNo)
+        })
+})
+
+test("GET/fuelstation", async() => {
+    const fStation = await FuelStation.create({
+        name: "Mako Filling Station",
+        nearCity: "Galle",
+        ownerName: "Theshan",
+        pstock: 50000,
+        dstock: 50000,
+        rpstock: 30000,
+        rdstock: 20000
+    })
+
+    await supertest(app)
+        .get("/test/fuel-station/show-fuel-station/Mako Filling Station")
+        .expect(200)
+        .then((response) => {
+            expect(response.body.fs.name).toBe(fStation.name)
         })
 })
