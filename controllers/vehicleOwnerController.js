@@ -169,6 +169,7 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     } catch (error) {
         return false
     }
+}
 
 const getVehicleTypes = async (req,res) => {
   try{
@@ -179,6 +180,7 @@ const getVehicleTypes = async (req,res) => {
       res.status(400).json({error: error.message});
   }
 }
+
 
 module.exports = {
     addVehicle,
