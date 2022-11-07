@@ -4,6 +4,7 @@ const VehicleTypes = require("../models/vehicleTypesModel")
 const User = require("../models/userModel")
 const RegisteredVehicles = require("../models/registeredVehiclesModel")
 const FuelQuota = require("../models/fuelQuotaModel")
+const Queue = require("../models/queueModel")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -120,7 +121,7 @@ const getVehicleOwnerName = async (req, res) => {
 const showOneVehicle = async (req, res) => {
     const { regNo } = req.params
     try {
-        const vehicle = await Vehicle.findOne({regNo})
+        const vehicle = await Vehicle.findOne({ regNo })
         res.status(200).json({ vehicle });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -181,14 +182,38 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     }
 }
 
-const getVehicleTypes = async (req,res) => {
-  try{
-      const vehicleTypes = await VehicleTypes.find()
-      res.status(200).json({vehicleTypes, result: "success"})
-  }
-  catch(error){
-      res.status(400).json({error: error.message});
-  }
+const getVehicleTypes = async (req, res) => {
+    try {
+        const vehicleTypes = await VehicleTypes.find()
+        res.status(200).json({ vehicleTypes, result: "success" })
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+const joinQueue = async (req, res) => {
+    // const q = await Queue.findOne({ queueType: 'petrol', fuelStationId: '6335ddd0bf09b4881f0d5bb2', active: true }).populate('fuelStationId')
+    // res.status(200).json({ q })
+
+    const {stationId, fuel, regNo} = req.body
+
+    try {
+        const vehicle = await Vehicle.findOne({regNo})
+        if (vehicle){
+            if(vehicle.fuelType === fuel){
+                const queue = await Queue.findOne({queueType: fuel, fuelStationId: stationId, active: true }).populate('fuelStationId')
+                const joinedVehicle = await Vehicle.updateOne({regNo}, {queueId: queue._id})
+                console.log(joinedVehicle);
+            } else {
+                res.status(200).json({error: 'Vehicle fuel type does not match the queue type'})
+            }
+        } else {
+            res.status(200).json({error: 'Vehicle not found'})
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
 }
 
 
@@ -197,7 +222,8 @@ module.exports = {
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
-    getVehicleOwnerName, 
+    getVehicleOwnerName,
     showOneVehicle,
-    getVehicleTypes
+    getVehicleTypes,
+    joinQueue,
 }
