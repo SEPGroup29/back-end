@@ -16,6 +16,7 @@ const token = require('../utils/token');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const ObjectId = require('mongoose').Types.ObjectId;
+const passwordGenerator = require('generate-password');
 
 
 // Functions 
@@ -249,32 +250,35 @@ const handleFsLogin = async (req, res) => {
     }
 }
 
-const handleManagerSignup = async (req, res) => {
-    const { firstName, lastName, contactNumber, email, password, fuelStationId } = req.body
-
+const handleManagerSignup = async (firstName, lastName, contactNumber, email, fuelStationId,{session},res) => {
+    
     try {
         // Check for existance
-        const user = await User.findOne({ email }).populate('userType');
-        if (user && user.userType.id == process.env.FUEL_STATION_MANAGER) {
-            res.status(200).json({ result: 'Email already exists' })
-        } else {
-            // Password encryption
-            const salt = await bcrypt.genSalt(10)
-            const hash = await bcrypt.hash(password, salt)
-
-            // Enter to database
-            const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
-            const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
-            const user = await User.create({ email: email, firstName, lastName, loginType: login._id, userType: userType._id })
-            const manager = await Manager.create({ user: user._id, contactNumber, password: hash, fuelStationId })
-            res.status(200).json({ user, manager })
+        const existingUser = await User.findOne({ email }).populate('userType');
+        if (existingUser && existingUser.userType.id == process.env.FUEL_STATION_MANAGER) {
+            res.status(200).json({ error: 'Manager Email already exists' })
+            return false
         }
-        // const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
-        // const fuelStation = await FuelStation.findById(fuelStationId)
-        // const user = await Manager.signup(firstName, lastName, contactNumber, email, password, fuelStation, userType)
-        // res.status(200).json({ user })
+        //generate password
+        const password = passwordGenerator.generate({
+            length: 6,
+            numbers: true,
+            symbols: true
+        });
+        console.log(password)
+        // Password encryption
+        const salt = await bcrypt.genSalt(10)
+        const hash = await bcrypt.hash(password, salt)
+
+        // Enter to database
+        const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
+        const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
+        const user = await User.create([{ email: email, firstName, lastName, loginType: login._id, userType: userType._id }],{session})
+        const manager = await Manager.create([{ user: user._id, contactNumber, password: hash, fuelStationId }] ,{session})
+
+        return manager
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        return false
     }
 }
 

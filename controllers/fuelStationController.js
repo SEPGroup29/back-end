@@ -1,12 +1,34 @@
+
+const authController = require('./authController')
 const mongoose = require('mongoose');
 const FuelStation = require('../models/fuelStationModel')
 const ObjectId = require('mongoose').Types.ObjectId;
 
 const insertFuelStation = async (req, res) => {
-    const { name, nearCity, ownerName, pstock, dstock, rpstock, rdstock } = req.body
+    const { name, nearCity, ownerName ,mnFirstName, mnLastName, contactNumber, mnEmail} = req.body
+    console.log(name, nearCity, ownerName);
     try {
-        const fs = await FuelStation.create({ name, nearCity, ownerName, pstock, dstock, rpstock, rdstock })
-        res.status(200).json(fs);
+        const session = await mongoose.startSession();
+        await session.withTransaction(async () => {
+        const result = await FuelStation.findOne({ name,nearCity })
+        
+        if (result) {
+            res.status(200).json({ error: 'Fuel station already exists' })
+            return
+        }
+        const fs = await FuelStation.create([{ name, nearCity, ownerName }],{session})
+        if(!fs){
+            res.status(200).json({ error: 'Fuel station not created' })
+            return
+        }
+        const fs_manager = await authController.handleManagerSignup(mnFirstName, mnLastName, contactNumber, mnEmail, fs._id,{session},res)
+        if(!fs_manager){
+            res.status(200).json({ error: 'Fuel station manager creation failed' })
+            return
+        }
+        res.status(200).json(fs_manager);
+    })
+    session.endSession();
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
