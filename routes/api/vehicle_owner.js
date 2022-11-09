@@ -9,5 +9,6 @@ router
     .get('/show-all-vehicle-owners', vehicleOwnerController.showAllVehicleOwners)
     .get('/get-vehicle-owner-name', vehicleOwnerController.getVehicleOwnerName)
     .get('/get-vehicle-types', vehicleOwnerController.getVehicleTypes)
+    .post('/join-queue', vehicleOwnerController.joinQueue)
 
 module.exports = router;

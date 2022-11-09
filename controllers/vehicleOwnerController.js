@@ -4,6 +4,7 @@ const VehicleTypes = require("../models/vehicleTypesModel")
 const User = require("../models/userModel")
 const RegisteredVehicles = require("../models/registeredVehiclesModel")
 const FuelQuota = require("../models/fuelQuotaModel")
+const Queue = require("../models/queueModel")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -120,7 +121,7 @@ const getVehicleOwnerName = async (req, res) => {
 const showOneVehicle = async (req, res) => {
     const { regNo } = req.params
     try {
-        const vehicle = await Vehicle.findOne({regNo})
+        const vehicle = await Vehicle.findOne({ regNo })
         res.status(200).json({ vehicle });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -181,14 +182,67 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     }
 }
 
-const getVehicleTypes = async (req,res) => {
-  try{
-      const vehicleTypes = await VehicleTypes.find()
-      res.status(200).json({vehicleTypes, result: "success"})
-  }
-  catch(error){
-      res.status(400).json({error: error.message});
-  }
+const getVehicleTypes = async (req, res) => {
+    try {
+        const vehicleTypes = await VehicleTypes.find()
+        res.status(200).json({ vehicleTypes, result: "success" })
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+const joinQueue = async (req, res) => {
+    const { stationId, fuel, regNo, amount } = req.body
+    const floatAmount = parseFloat(amount)
+    try {
+        // Vehicle validity
+        const vehicle = await Vehicle.findOne({ regNo })
+        if (vehicle) {
+            // Check whether the vehicle has already joined a queue
+            if (vehicle.queueId) {
+                res.status(200).json({ error: 'This vehicle has already joined a queue' })
+                return
+            }
+            // Check whether the vehicle fuel type and queue type is different
+            if (vehicle.fuelType !== fuel) {
+                res.status(200).json({ error: 'Vehicle fuel type does not match the queue type' })
+                return
+            }
+            // Get related queue
+            const queue = await Queue.findOne({ queueType: fuel, fuelStationId: stationId, active: true }).populate('fuelStationId')
+            if (!queue) {
+                res.status(200).json({ error: 'This queue is not available' })
+                return
+            }
+            // Check whether the remaing stock is enough to supply amount entered by vehicle owner
+            switch (queue.queueType) {
+                case 'petrol':
+                    console.log(queue.fuelStationId.rpstock, floatAmount);
+                    if (!(queue.fuelStationId.rpstock >= floatAmount)) {
+                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        return
+                    }
+                    break;
+                case 'diesel':
+                    if (!(queue.fuelStationId.rdstock >= floatAmount)) {
+                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        return
+                    }
+                    break;
+                default:
+                    res.status(200).json({ error: 'Invalid queue type' })
+                    return
+            }
+            const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id })
+            res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}` })
+        } else {
+            res.status(200).json({ error: 'Vehicle not found' })
+            return
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
 }
 
 
@@ -197,7 +251,8 @@ module.exports = {
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
-    getVehicleOwnerName, 
+    getVehicleOwnerName,
     showOneVehicle,
-    getVehicleTypes
+    getVehicleTypes,
+    joinQueue,
 }
