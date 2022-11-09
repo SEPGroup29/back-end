@@ -193,23 +193,52 @@ const getVehicleTypes = async (req, res) => {
 }
 
 const joinQueue = async (req, res) => {
-    // const q = await Queue.findOne({ queueType: 'petrol', fuelStationId: '6335ddd0bf09b4881f0d5bb2', active: true }).populate('fuelStationId')
-    // res.status(200).json({ q })
-
-    const {stationId, fuel, regNo} = req.body
-
+    const { stationId, fuel, regNo, amount } = req.body
+    const floatAmount = parseFloat(amount)
     try {
-        const vehicle = await Vehicle.findOne({regNo})
-        if (vehicle){
-            if(vehicle.fuelType === fuel){
-                const queue = await Queue.findOne({queueType: fuel, fuelStationId: stationId, active: true }).populate('fuelStationId')
-                const joinedVehicle = await Vehicle.updateOne({regNo}, {queueId: queue._id})
-                console.log(joinedVehicle);
-            } else {
-                res.status(200).json({error: 'Vehicle fuel type does not match the queue type'})
+        // Vehicle validity
+        const vehicle = await Vehicle.findOne({ regNo })
+        if (vehicle) {
+            // Check whether the vehicle has already joined a queue
+            if (vehicle.queueId) {
+                res.status(200).json({ error: 'This vehicle has already joined a queue' })
+                return
             }
+            // Check whether the vehicle fuel type and queue type is different
+            if (vehicle.fuelType !== fuel) {
+                res.status(200).json({ error: 'Vehicle fuel type does not match the queue type' })
+                return
+            }
+            // Get related queue
+            const queue = await Queue.findOne({ queueType: fuel, fuelStationId: stationId, active: true }).populate('fuelStationId')
+            if (!queue) {
+                res.status(200).json({ error: 'This queue is not available' })
+                return
+            }
+            // Check whether the remaing stock is enough to supply amount entered by vehicle owner
+            switch (queue.queueType) {
+                case 'petrol':
+                    console.log(queue.fuelStationId.rpstock, floatAmount);
+                    if (!(queue.fuelStationId.rpstock >= floatAmount)) {
+                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        return
+                    }
+                    break;
+                case 'diesel':
+                    if (!(queue.fuelStationId.rdstock >= floatAmount)) {
+                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        return
+                    }
+                    break;
+                default:
+                    res.status(200).json({ error: 'Invalid queue type' })
+                    return
+            }
+            const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id })
+            res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}` })
         } else {
-            res.status(200).json({error: 'Vehicle not found'})
+            res.status(200).json({ error: 'Vehicle not found' })
+            return
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
