@@ -18,7 +18,7 @@ const otpSchema = new Schema({
     }
 })
 
-otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 });      // OTP entry will delete in 1 minute
+otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 300 });      // OTP entry will delete in 1 minute
 
 const OTP = mongoose.model('OTP', otpSchema);
 module.exports = OTP;

@@ -1,5 +1,7 @@
 const verifyRoles = (...allowedRoles) => {
     return (req, res, next) => {
+        console.log("========================");
+        console.log(req);
         if (!req.user_id) {
             return res.status(401).json({ message: "User id is missing." });
         }

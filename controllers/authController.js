@@ -107,6 +107,7 @@ const handleLoginAfterOTP = async (req, res) => {
     const { email, entered_otp } = req.body
     try {
         const otp = await OTP.findOne({ email })
+        console.log(otp)
         if (otp) {
             // OTP check
             if (entered_otp === otp.otp) {
@@ -347,7 +348,41 @@ const handlePumpOperatorSignup = async (req, res) => {
 }
 
 const handleLogout = async (req, res) => {
+    // const { user_id } = req.body;
+    const cookies = req.cookies;
+    console.log("cookiee value :", cookies);
 
+    if (!cookies?.jwt) {
+        return res.status(204).json({ "message": "No token found" });
+    }
+
+    const refresh_token = cookies.jwt;
+
+    const auth = await prisma.Auth.findUnique({
+        where: {
+            refresh_token
+        }
+    })
+
+    if (!auth) {
+        return res.status(404).json({ "message": `User does not exist...` });
+    }
+
+    const result = await prisma.Auth.update({
+        where: {
+            refresh_token
+        },
+        data: {
+            refresh_token: null,
+        }
+    });
+
+    console.log(result)
+
+    res.clearCookie('jwt');
+    return res.status(200).json({
+        "message": "Logout successful",
+    });
 }
 
 // Handle new access token
@@ -460,5 +495,5 @@ module.exports = {
     handleManagerSignup,
     handlePumpOperatorLogin,
     handlePumpOperatorSignup,
-    handleNewAccessToken
+    handleNewAccessToken,
 }
