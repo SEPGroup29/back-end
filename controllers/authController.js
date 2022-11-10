@@ -250,8 +250,8 @@ const handleFsLogin = async (req, res) => {
     }
 }
 
-const handleManagerSignup = async (firstName, lastName, contactNumber, email, fuelStationId,{session},res) => {
-    
+const handleManagerSignup = async (firstName, lastName, contactNumber, email, fuelStationId) => {
+    console.log({ firstName, lastName, contactNumber, email, fuelStationId }); 
     try {
         // Check for existance
         const existingUser = await User.findOne({ email }).populate('userType');
@@ -273,11 +273,13 @@ const handleManagerSignup = async (firstName, lastName, contactNumber, email, fu
         // Enter to database
         const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
         const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
-        const user = await User.create([{ email: email, firstName, lastName, loginType: login._id, userType: userType._id }],{session})
-        const manager = await Manager.create([{ user: user._id, contactNumber, password: hash, fuelStationId }] ,{session})
-
+        const user = await User.create({ email: email, firstName, lastName, loginType: login._id, userType: userType._id })
+        console.log(user)
+        const manager = await Manager.create({ user: user._id, contactNumber, password: hash, fuelStationId })
+        console.log(manager)
         return manager
     } catch (error) {
+        console.log(error)
         return false
     }
 }
