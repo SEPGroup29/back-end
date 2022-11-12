@@ -8,7 +8,7 @@ router
     .get('/show-vehicles', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.showVehicles)
     .delete('/delete-vehicle/:vehicle_id', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.deleteVehicle)
     .get('/show-all-vehicle-owners', verifyRoles(process.env.ADMIN), vehicleOwnerController.showAllVehicleOwners)
-    .get('/get-vehicle-owner-name', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.getVehicleOwnerName)
+    .get('/get-vehicle-owner', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.getVehicleOwner)
     .get('/get-vehicle-types', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.getVehicleTypes)
     .post('/join-queue', verifyRoles(process.env.VEHICLE_OWNER), vehicleOwnerController.joinQueue)
 

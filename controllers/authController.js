@@ -33,7 +33,6 @@ const handleEmailExistance = async (req, res) => {
                 res.status(200).json({ result: 'Sent' })
             else {
                 res.status(200).json({ result: 'OTP generation error' })
-                console.log("Else")
             }
         }
     } catch (error) {
@@ -56,7 +55,7 @@ const handleRegister = async (req, res) => {
                     const userType = await UserTypes.findOne({ id: process.env.VEHICLE_OWNER })
                     const login = await Login.findOne({ loginType: process.env.OTP_LOGIN })
                     const user = await User.create({ email, firstName, lastName, loginType: login._id, userType: userType._id })
-                    const vehicleOwner = await VehicleOwner.create({ user: user._id, NIC })
+                    const vehicleOwner = await VehicleOwner.create({ user: user._id, NIC, consumedPQ: 0, consumedDQ: 0 })
                     const mail_status = await sendRegSuccessMail({ to: email });
 
                     //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
@@ -115,7 +114,6 @@ const handleLoginAfterOTP = async (req, res) => {
                     const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.VEHICLE_OWNER)
 
                     // Set to cookie
-                    // console.log("RES.COOKIES", res.cookies);
                     //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
                     const delOtp = await OTP.deleteMany({ email })
 
@@ -146,12 +144,9 @@ const handleAdminLogin = async (req, res) => {
         const user = await User.findOne({ email }).populate('userType');
         if (user && user.userType.id == process.env.ADMIN) {
             const admin = await Admin.findOne({ user: user._id })
-            // console.log(user);
-            // console.log(admin);
             const match = await bcrypt.compare(password, admin.password)
             if (match) {
                 const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.ADMIN)
-                console.log({ authObject, access_token, refresh_token });
 
                 // Set to cookie
                 res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
@@ -349,7 +344,6 @@ const handlePumpOperatorSignup = async (req, res) => {
 const handleLogout = async (req, res) => {
     // const { user_id } = req.body;
     const cookies = req.cookies;
-    console.log("cookiee value :", cookies);
 
     if (!cookies?.jwt) {
         return res.status(204).json({ "message": "No token found" });
@@ -364,12 +358,29 @@ const handleLogout = async (req, res) => {
 
     const result = await User.findOneAndUpdate({ refresh_token }, { refresh_token: null });
 
-    console.log(result)
-
     res.clearCookie('jwt');
     return res.status(200).json({
         "message": "Logout successful",
     });
+}
+
+const getUser = async (req, res) => {
+    const { id } = req.params
+    try {
+        var user = await User.findById(id).populate('userType')
+        if (!user) {
+            res.status(200).json({ error: 'User not found' })
+            return
+        }
+        if (user.userType.id == process.env.VEHICLE_OWNER) {
+            user = await VehicleOwner.findOne({ user: user._id }).populate('user')
+            res.status(200).json({ user })
+            return
+        }
+        res.status(200).json({ user })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
 }
 
 // Handle new access token
@@ -403,7 +414,6 @@ const handleNewAccessToken = async (req, res) => {
         process.env.REFRESH_TOKEN_SECRET,
         (err, decoded) => {
             console.log('decoded ', decoded);
-            console.log('auth ', auth);
             if (err || auth.user_id !== decoded.user_id) {
                 console.log("requesting new access token failed invalid token")
                 return res.status(403).json({ "message": "Invalid token" });
@@ -465,9 +475,7 @@ const getLoginData = async (user, email, role) => {
 
     // Saving refresh token in database
     const userType = await UserTypes.findOne({id: role})
-    console.log("USER TYPR", userType);
     const result = await User.findOneAndUpdate({ email, userType:userType._id }, { refreshToken: refresh_token })
-    console.log("RESULT", result);
     console.log("refresh token", refresh_token);
     console.log("access token", access_token);
     return ({
@@ -475,28 +483,6 @@ const getLoginData = async (user, email, role) => {
         access_token,
         refresh_token
     })
-}
-
-const getUser = async (req, res) => {
-    const { id } = req.params
-    console.log("ID inside service", id)
-    try {
-        var user = await User.findById(id).populate('userType')
-        if (!user) {
-            res.status(200).json({ error: 'User not found' })
-            return
-        }
-        if (user.userType.id == process.env.VEHICLE_OWNER) {
-            user = await VehicleOwner.findOne({ user: user._id }).populate('user')
-            res.status(200).json({ user })
-            console.log("===================NAVBAR USER", user)
-            return
-        }
-        console.log("===================NAVBAR USER", user)
-        res.status(200).json({ user })
-    } catch (error) {
-        res.status(400).json({ error: error.message })
-    }
 }
 
 module.exports = {

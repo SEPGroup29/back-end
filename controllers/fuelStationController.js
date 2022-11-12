@@ -14,14 +14,11 @@ const insertFuelStation = async (req, res) => {
 
 const showAllFuelStations = async (req, res) => {
     const { search } = req.params
-    console.log(search);
     try {
         if (search === 'null') {
             var stations = await FuelStation.find().sort({ name: 1 })
-            console.log("IF")
             res.status(200).json({ stations, result: 'success' });
         } else {
-            console.log("ELSE")
             var stations = await FuelStation.find({ name: { $regex: search, '$options' : 'i'} }).sort({ name: 1 })
             res.status(200).json({ stations, result: 'success' });
         }
