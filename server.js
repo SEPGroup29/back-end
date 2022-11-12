@@ -1,5 +1,6 @@
 const express = require('express')
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const bodyParser = require('body-parser');
@@ -15,8 +16,12 @@ const corsOptions ={
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
+// cookie parser middleware
+app.use(cookieParser());
+
 // Connect DB & start server
 const mongoose = require('mongoose');
+const verifyJWT = require('./middlewares/verifyJWT');
 const uri = process.env.MONGO_URI
 
 const connectionParams = {
@@ -24,6 +29,14 @@ const connectionParams = {
     // useCreateIndex: true,
     useUnifiedTopology: true
 }
+
+
+// Auth routes
+app.use('/auth', require('./routes/auth'))
+
+//API routes
+app.use('/api/vehicle-owner', verifyJWT, require('./routes/api/vehicle_owner'))
+app.use('/api/fuel-station', verifyJWT, require('./routes/api/fuel_station'))
 
 mongoose.connect(uri, connectionParams)
     .then( () => {
@@ -35,10 +48,3 @@ mongoose.connect(uri, connectionParams)
     .catch( (err) => {
         console.error(`Error connecting to the database. \n${err}`);
     })
-
-// Auth routes
-app.use('/auth', require('./routes/auth'))
-
-//API routes
-app.use('/api/vehicle-owner', require('./routes/api/vehicle_owner'))
-app.use('/api/fuel-station', require('./routes/api/fuel_station'))

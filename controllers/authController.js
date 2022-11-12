@@ -107,20 +107,19 @@ const handleLoginAfterOTP = async (req, res) => {
     const { email, entered_otp } = req.body
     try {
         const otp = await OTP.findOne({ email })
-        console.log(otp)
         if (otp) {
             // OTP check
             if (entered_otp === otp.otp) {
                 const user = await User.findOne({ email }).populate('userType');
                 if (user) {
-                    const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+                    const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.VEHICLE_OWNER)
 
                     // Set to cookie
-                    res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
-
+                    // console.log("RES.COOKIES", res.cookies);
                     //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
                     const delOtp = await OTP.deleteMany({ email })
 
+                    res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
                     return res.status(200).json({
                         message: "Login successful",
                         auth_object: authObject,
@@ -151,7 +150,7 @@ const handleAdminLogin = async (req, res) => {
             // console.log(admin);
             const match = await bcrypt.compare(password, admin.password)
             if (match) {
-                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.ADMIN)
                 console.log({ authObject, access_token, refresh_token });
 
                 // Set to cookie
@@ -207,7 +206,7 @@ const handleFsLogin = async (req, res) => {
             const manager = await Manager.findOne({ user: user._id })
             const match = await bcrypt.compare(password, manager.password)
             if (match) {
-                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.FUEL_STATION_MANAGER)
 
                 // Set to cookie
                 res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
@@ -221,24 +220,24 @@ const handleFsLogin = async (req, res) => {
                 res.status(200).json({ error: 'Incorrect Password' })
             }
         }
-        else if (user && user.userType.id == process.env.PUMP_OPERATOR) {
-            const po = await PumpOperator.findOne({ user: user._id })
-            const match = await bcrypt.compare(password, po.password)
-            if (match) {
-                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+        // else if (user && user.userType.id == process.env.PUMP_OPERATOR) {
+        //     const po = await PumpOperator.findOne({ user: user._id })
+        //     const match = await bcrypt.compare(password, po.password)
+        //     if (match) {
+        //         const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.PUMP_OPERATOR)
 
-                // Set to cookie
-                res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+        //         // Set to cookie
+        //         res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
-                res.status(200).json({
-                    message: "Pump Operator Login successful",
-                    auth_object: authObject,
-                    access_token
-                });
-            } else {
-                res.status(200).json({ error: 'Incorrect Password' })
-            }
-        }
+        //         res.status(200).json({
+        //             message: "Pump Operator Login successful",
+        //             auth_object: authObject,
+        //             access_token
+        //         });
+        //     } else {
+        //         res.status(200).json({ error: 'Incorrect Password' })
+        //     }
+        // }
         else {
             res.status(200).json({ error: 'Email not found' })
         }
@@ -356,26 +355,14 @@ const handleLogout = async (req, res) => {
         return res.status(204).json({ "message": "No token found" });
     }
 
-    const refresh_token = cookies.jwt;
-
-    const auth = await prisma.Auth.findUnique({
-        where: {
-            refresh_token
-        }
-    })
+    const refresh_token = cookies.jwt; 
+    const auth = await User.findOne({ refresh_token })
 
     if (!auth) {
         return res.status(404).json({ "message": `User does not exist...` });
     }
 
-    const result = await prisma.Auth.update({
-        where: {
-            refresh_token
-        },
-        data: {
-            refresh_token: null,
-        }
-    });
+    const result = await User.findOneAndUpdate({ refresh_token }, { refresh_token: null });
 
     console.log(result)
 
@@ -401,14 +388,15 @@ const handleNewAccessToken = async (req, res) => {
 
     const refreshToken = cookies.jwt;
 
-    const auth = await User.find({ refreshToken }).populate('userType')
+    const auth = await User.findOne({ refreshToken }).populate('userType')
 
+    console.log("AUTH", auth);
     if (!auth) {
         console.log("invalid refresh token :", refreshToken);
         return res.status(403).json({ "message": "Invalid token" });
     }
-
     const authObject = getAuthObject(auth);
+    console.log("AUTH OBJECT", authObject);
 
     jwt.verify(
         refreshToken,
@@ -422,7 +410,9 @@ const handleNewAccessToken = async (req, res) => {
             }
 
             // FIXME: check if need to update refresh token also
-            const access_token = token.getAccessToken(authObject);
+            const userTypeId = auth.userType.id
+            const role = userTypeId === 1 ? process.env.ADMIN : (userTypeId === 2 ? process.env.VEHICLE_OWNER : (userTypeId === 3 ? process.env.FUEL_STATION_MANAGER : process.env.PUMP_OPERATOR))
+            const access_token = token.getAccessToken(authObject, role);
             console.log("new access token getting sucessfully")
             return res.status(200).json({
                 "message": "Refresh token successful",
@@ -456,31 +446,57 @@ const generateAndSendOtp = async (email, type) => {
 const getAuthObject = (auth) => {
     return {
         id: auth._id,
-        user_type: auth.userType.type,
+        user_type: auth.userType.type
     }
 }
 
 //Create and save JWT auth tokens
-const createAndSaveTokens = (result) => {
+const createAndSaveTokens = (result, role) => {
     const authObject = getAuthObject(result)
-    const access_token = token.getAccessToken(authObject);
+    const access_token = token.getAccessToken(authObject, role);
     const refresh_token = token.getRefreshToken(authObject);
 
     return ({ authObject, access_token, refresh_token })
 }
 
 // Get {authObject, access_token, refresh_token} at any user login
-const getLoginData = async (user, email) => {
-    const { authObject, access_token, refresh_token } = createAndSaveTokens(user)
+const getLoginData = async (user, email, role) => {
+    const { authObject, access_token, refresh_token } = createAndSaveTokens(user, role)
 
     // Saving refresh token in database
-    const result = await User.updateOne({ email }, { refreshToken: refresh_token })
-
+    const userType = await UserTypes.findOne({id: role})
+    console.log("USER TYPR", userType);
+    const result = await User.findOneAndUpdate({ email, userType:userType._id }, { refreshToken: refresh_token })
+    console.log("RESULT", result);
+    console.log("refresh token", refresh_token);
+    console.log("access token", access_token);
     return ({
         authObject,
         access_token,
         refresh_token
     })
+}
+
+const getUser = async (req, res) => {
+    const { id } = req.params
+    console.log("ID inside service", id)
+    try {
+        var user = await User.findById(id).populate('userType')
+        if (!user) {
+            res.status(200).json({ error: 'User not found' })
+            return
+        }
+        if (user.userType.id == process.env.VEHICLE_OWNER) {
+            user = await VehicleOwner.findOne({ user: user._id }).populate('user')
+            res.status(200).json({ user })
+            console.log("===================NAVBAR USER", user)
+            return
+        }
+        console.log("===================NAVBAR USER", user)
+        res.status(200).json({ user })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
 }
 
 module.exports = {
@@ -496,4 +512,5 @@ module.exports = {
     handlePumpOperatorLogin,
     handlePumpOperatorSignup,
     handleNewAccessToken,
+    getUser,
 }
