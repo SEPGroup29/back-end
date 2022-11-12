@@ -15,20 +15,16 @@ const fuelStationSchema = new Schema({
         required: true
     },
     pstock: {
-        type: Number,
-        required: true
+        type: Number
     },
     dstock: {
-        type: Number,
-        required: true
+        type: Number
     },
     rpstock: {
-        type: Number,
-        required: true
+        type: Number
     },
     rdstock: {
-        type: Number,
-        required: true
+        type: Number
     }
 });
 
