@@ -5,8 +5,8 @@ const router = express.Router();
 
 router
     .post('/add-fuel-station', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.insertFuelStation)
-    .get('/show-all-fuel-stations/:search', fuelStationController.showAllFuelStations)
+    .get('/show-all-fuel-stations/:search', verifyRoles(process.env.VEHICLE_OWNER), fuelStationController.showAllFuelStations)
     .post('/update-stock', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.updateStock)
-    .get('/get-stock/:fs_id', fuelStationController.getStock)
+    .get('/get-stock/:fs_id', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.getStock)
 
 module.exports = router;
