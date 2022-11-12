@@ -17,6 +17,7 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 const ObjectId = require('mongoose').Types.ObjectId;
 const passwordGenerator = require('generate-password');
+const { sendFsRegMail } = require('../services/mail/fs_register_mail');
 
 
 // Functions 
@@ -250,7 +251,7 @@ const handleFsLogin = async (req, res) => {
     }
 }
 
-const handleManagerSignup = async (firstName, lastName, contactNumber, email, fuelStationId) => {
+const handleManagerSignup = async ( name, nearCity, ownerName,firstName, lastName, contactNumber, email, fuelStationId) => {
     console.log({ firstName, lastName, contactNumber, email, fuelStationId }); 
     try {
         // Check for existance
@@ -274,9 +275,15 @@ const handleManagerSignup = async (firstName, lastName, contactNumber, email, fu
         const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
         const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
         const user = await User.create({ email: email, firstName, lastName, loginType: login._id, userType: userType._id })
-        console.log(user)
+        
         const manager = await Manager.create({ user: user._id, contactNumber, password: hash, fuelStationId })
-        console.log(manager)
+        
+        //send email
+        const result = await sendFsRegMail({password,to:email, name, nearCity, ownerName})
+
+        if(!result){
+            return false
+        }
         return manager
     } catch (error) {
         console.log(error)

@@ -19,7 +19,7 @@ const insertFuelStation = async (req, res) => {
             res.status(200).json({ error: 'Fuel station not created' })
             return
         }
-        const fs_manager = await authController.handleManagerSignup(mnFirstName, mnLastName, contactNumber, mnEmail, fs._id)
+        const fs_manager = await authController.handleManagerSignup( name, nearCity, ownerName,mnFirstName, mnLastName, contactNumber, mnEmail, fs._id)
         if(!fs_manager){
             res.status(200).json({ error: 'Fuel station manager creation failed' })
             return
