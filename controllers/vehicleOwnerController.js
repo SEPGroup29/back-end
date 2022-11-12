@@ -5,6 +5,7 @@ const User = require("../models/userModel")
 const RegisteredVehicles = require("../models/registeredVehiclesModel")
 const FuelQuota = require("../models/fuelQuotaModel")
 const Queue = require("../models/queueModel")
+const { getCurrentUser } = require("../helpers/functions/getCurrentUser")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -16,8 +17,14 @@ const addVehicle = async (req, res) => {
         // Check for chassis number validity
         const registeredVehicle = await RegisteredVehicles.findOne({ chassisNo })
         if (registeredVehicle && registeredVehicle.regNo === regNo) {
-            const NIC = '123456789V'    // Should get current user's nic
-            const vo = await VehicleOwner.findOne({ NIC }).populate("fuelQuota")
+            const user = await getCurrentUser(req)
+            if (!user) {
+                res.status(200).json({ error: "User not found" })
+                return
+            }
+            const vo = await VehicleOwner.findOne({ user: user._id })
+            // const NIC = '123456789V'    // Should get current user's nic
+            // const vo = await VehicleOwner.findOne({ NIC }).populate("fuelQuota")
             //Check for vehicle count
             const vehicle_count = await Vehicle.find({ vehicleOwnerId: vo._id }).count()
             if (vehicle_count === 3) {
@@ -66,10 +73,12 @@ const addVehicle = async (req, res) => {
 
 const showVehicles = async (req, res) => {
     try {
-        const NIC = '123456789V'
-
-        //Get vehicle owner
-        const vo = await VehicleOwner.findOne({ NIC })
+        const user = await getCurrentUser(req)
+        if (!user) {
+            res.status(200).json({ error: "User not found" })
+            return
+        }
+        const vo = await VehicleOwner.findOne({ user: user._id })
         if (vo) {
             const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
             res.status(200).json({ vehicles })
@@ -83,7 +92,6 @@ const showVehicles = async (req, res) => {
 
 const deleteVehicle = async (req, res) => {
     const { vehicle_id } = req.params
-    console.log(vehicle_id)
     try {
         const vehicle = await Vehicle.findOneAndDelete({ _id: vehicle_id })
         if (vehicle) {
@@ -99,19 +107,35 @@ const deleteVehicle = async (req, res) => {
 const showAllVehicleOwners = async (req, res) => {
     try {
         const vehicleOwners = await VehicleOwner.find().sort({ name: 1 }).populate('user')
-        console.log(vehicleOwners);
         res.status(200).json({ vehicleOwners, result: 'success' });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 }
 
-const getVehicleOwnerName = async (req, res) => {
-    const NIC = '123456789V'
+const getVehicleOwner = async (req, res) => {
+    const user = await getCurrentUser(req)
+    if (!user) {
+        res.status(200).json({ error: "User not found" })
+        return
+    }
     try {
-        const user = await VehicleOwner.findOne({ NIC }).populate('user')
-        const name = user.user.firstName
-        res.status(200).json({ name, result: "success" })
+        const vo = await VehicleOwner.findOne({ user: user._id }).populate('user').populate('fuelQuota')
+        var remainingQuota
+        if (vo.fuelQuota) {
+            const epq = vo.fuelQuota.EPQ
+            const edq = vo.fuelQuota.EDQ
+            remainingQuota = {
+                rpq: vo.fuelQuota.EPQ - vo.consumedPQ,
+                rdq: vo.fuelQuota.EDQ - vo.consumedDQ
+            }
+        } else {
+            remainingQuota = {
+                rpq: 0,
+                rdq: 0
+            }
+        }
+        res.status(200).json({ vo, remainingQuota })
     }
     catch (error) {
         res.status(400).json({ error: error.message });
@@ -132,7 +156,6 @@ const showOneVehicle = async (req, res) => {
 const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     try {
         const preVehicles = await Vehicle.find({ vehicleOwnerId, fuelType }).populate("vehicleType")
-        console.log("PREVEH LENGTH: ", preVehicles.length)
         if (preVehicles.length > 0) {
             //------- Algorithm----------
             const newVehicleQuota = vehicle.fuelAllocation
@@ -140,10 +163,6 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
             var newQuota
             switch (preVehicles.length) {
                 case 1:
-                    // console.log("Inside case 1");
-                    // console.log(parseFloat(currentQuota))
-                    // console.log(parseFloat(newVehicleQuota)*5)
-                    // console.log(parseFloat(preVehicles[0].vehicleType.fuelAllocation))
                     newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100)
                     var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
@@ -218,7 +237,6 @@ const joinQueue = async (req, res) => {
             // Check whether the remaing stock is enough to supply amount entered by vehicle owner
             switch (queue.queueType) {
                 case 'petrol':
-                    console.log(queue.fuelStationId.rpstock, floatAmount);
                     if (!(queue.fuelStationId.rpstock >= floatAmount)) {
                         res.status(200).json({ error: 'Fuel stock is not enough' })
                         return
@@ -245,13 +263,12 @@ const joinQueue = async (req, res) => {
     }
 }
 
-
 module.exports = {
     addVehicle,
     showVehicles,
     deleteVehicle,
     showAllVehicleOwners,
-    getVehicleOwnerName,
+    getVehicleOwner,
     showOneVehicle,
     getVehicleTypes,
     joinQueue,
