@@ -8,5 +8,6 @@ router
     .get('/show-all-fuel-stations/:search', verifyRoles(process.env.VEHICLE_OWNER), fuelStationController.showAllFuelStations)
     .post('/update-stock', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.updateStock)
     .get('/get-stock/:fs_id', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.getStock)
+    .get('/get-three-fuel-stations', verifyRoles(process.env.VEHICLE_OWNER), fuelStationController.getThreeFuelStations)
 
 module.exports = router;
