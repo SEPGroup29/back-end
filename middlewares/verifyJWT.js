@@ -5,6 +5,7 @@ const verifyJWT = (req, res, next) => {
     console.log('JWT verification...');
 
     const authHeader = req.headers.authorization || req.headers.Authorization;
+    console.log('HEADER', req.header);
     console.log('authHeader', authHeader);
 
 
@@ -23,8 +24,9 @@ const verifyJWT = (req, res, next) => {
             }
             req.user_id = decoded.user_id;
             req.user_type = decoded.user_type;
+            req.role = decoded.role;
             console.log('JWT verified...');
-            console.log("decoded :", decoded)
+            console.log("DECODED TOKEN INSIDE VERIFY JWT :", decoded)
             next();
         }
     )

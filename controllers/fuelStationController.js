@@ -33,15 +33,12 @@ const insertFuelStation = async (req, res) => {
 
 const showAllFuelStations = async (req, res) => {
     const { search } = req.params
-    console.log(search);
     try {
         if (search === 'null') {
             var stations = await FuelStation.find().sort({ name: 1 })
-            console.log("IF")
             res.status(200).json({ stations, result: 'success' });
         } else {
-            console.log("ELSE")
-            var stations = await FuelStation.find({ name: { $regex: search, '$options' : 'i'} }).sort({ name: 1 })
+            var stations = await FuelStation.find({ name: { $regex: search, '$options': 'i' } }).sort({ name: 1 })
             res.status(200).json({ stations, result: 'success' });
         }
     } catch (error) {
@@ -49,13 +46,13 @@ const showAllFuelStations = async (req, res) => {
     }
 }
 
-const showOneFuelStation = async(req,res) =>{
-    const{ name } = req.params
-    try{
-        const fs = await FuelStation.findOne({name})
+const showOneFuelStation = async (req, res) => {
+    const { name } = req.params
+    try {
+        const fs = await FuelStation.findOne({ name })
         res.status(200).json({ fs });
-    }catch(error){
-        res.status(400).json({error: error.message})
+    } catch (error) {
+        res.status(400).json({ error: error.message })
     }
 }
 
@@ -112,10 +109,30 @@ const updateStock = async (req, res) => {
     }
 }
 
+const getThreeFuelStations = async (req, res) => {
+    try {
+        // Get the count of all fuel stations
+        FuelStation.count().exec(function (err, count) {
+
+            // Get a random entry
+            var random = Math.floor(Math.random() * count)
+
+            // Again query all fuel stations but only fetch one offset by our random #
+            FuelStation.find().limit(3).skip(random).exec(
+                function (err, result) {
+                    res.status(200).json({result})
+                })
+        })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
 module.exports = {
     insertFuelStation,
     showAllFuelStations,
     showOneFuelStation,
     getStock,
     updateStock,
+    getThreeFuelStations,
 }

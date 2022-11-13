@@ -11,14 +11,13 @@ const otpSchema = new Schema({
         required: true
     },
     createdAt: {
-        type: 'Date',
-        required: true,
-        default: Date.now,
-        expires: 60
+        type: Date,
+        expires: '10m',  // OTP entriees will delete in 10 minutes
+        default: Date.now
     }
 })
 
-otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 });      // OTP entry will delete in 1 minute
+// otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 });      // OTP entry will delete in 1 minute
 
 const OTP = mongoose.model('OTP', otpSchema);
 module.exports = OTP;
