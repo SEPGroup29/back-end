@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Get vehicle type implemented" />
+    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="unversion file added">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controllers/authController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/authController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,7 +25,6 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GithubPullRequestsUISettings">
     <option name="recentNewPullRequestHead">
@@ -71,6 +74,14 @@
       <workItem from="1667194946290" duration="2087000" />
       <workItem from="1667220344750" duration="584000" />
       <workItem from="1667417014147" duration="794000" />
+      <workItem from="1667448241352" duration="168000" />
+      <workItem from="1667827063702" duration="4933000" />
+      <workItem from="1667889109231" duration="2373000" />
+      <workItem from="1668149963541" duration="12000" />
+      <workItem from="1668269916581" duration="3529000" />
+      <workItem from="1668314198929" duration="1047000" />
+      <workItem from="1668343676066" duration="1519000" />
+      <workItem from="1668348910739" duration="2299000" />
     </task>
     <task id="LOCAL-00001" summary="Vehicle Owner Name Get functionality added">
       <created>1664733153798</created>
