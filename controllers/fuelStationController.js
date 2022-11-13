@@ -1,7 +1,10 @@
 
 const authController = require('./authController')
 const mongoose = require('mongoose');
-const FuelStation = require('../models/fuelStationModel')
+const FuelStation = require('../models/fuelStationModel');
+const FuelStationManager = require('../models/fuelStationManagerModal');
+const { getCurrentUser } = require('../helpers/functions/getCurrentUser');
+const PumpOperator = require('../models/pumpOperatorModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 const insertFuelStation = async (req, res) => {
@@ -51,6 +54,26 @@ const showOneFuelStation = async (req, res) => {
     try {
         const fs = await FuelStation.findOne({ name })
         res.status(200).json({ fs });
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+const showFuelStation = async (req, res) => {
+    try {
+        const user = await getCurrentUser(req)
+        console.log("USER", user);
+        if (!user) {
+            res.status(200).json({ error: "User not found" })
+            return
+        }
+        const fs = await FuelStationManager.findOne({ user: user._id }).populate('fuelStationId')
+        if (!fs) {
+            res.status(200).json({ error: "Fuel station not found" })
+            return
+        }
+        const pumpOperators = await PumpOperator.find({fuelStationId: fs.fuelStationId.id}).populate('user')
+        res.status(200).json({ fs, pumpOperators });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -135,4 +158,5 @@ module.exports = {
     getStock,
     updateStock,
     getThreeFuelStations,
+    showFuelStation,
 }
