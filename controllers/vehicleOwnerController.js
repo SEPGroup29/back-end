@@ -22,9 +22,7 @@ const addVehicle = async (req, res) => {
                 res.status(200).json({ error: "User not found" })
                 return
             }
-            const vo = await VehicleOwner.findOne({ user: user._id })
-            // const NIC = '123456789V'    // Should get current user's nic
-            // const vo = await VehicleOwner.findOne({ NIC }).populate("fuelQuota")
+            const vo = await VehicleOwner.findOne({ user: user._id }).populate('fuelQuota')
             //Check for vehicle count
             const vehicle_count = await Vehicle.find({ vehicleOwnerId: vo._id }).count()
             if (vehicle_count === 3) {
