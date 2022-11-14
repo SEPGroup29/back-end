@@ -289,13 +289,15 @@ const handleManagerSignup = async ( name, nearCity, ownerName,firstName, lastNam
 const handlePumpOperatorLogin = async (req, res) => {
     const { email, password } = req.body
 
+    console.log(req.body)
+
     try {
         const user = await User.findOne({ email }).populate('userType');
         if (user && user.userType.id == process.env.PUMP_OPERATOR) {
             const pumpOperator = await PumpOperator.findOne({ user: user._id })
             const match = await bcrypt.compare(password, pumpOperator.password)
             if (match) {
-                const { authObject, access_token, refresh_token } = await getLoginData(user, email)
+                const { authObject, access_token, refresh_token } = await getLoginData(user, email, process.env.PUMP_OPERATOR)
 
                 // Set to cookie
                 res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
@@ -303,6 +305,7 @@ const handlePumpOperatorLogin = async (req, res) => {
                 res.status(200).json({
                     message: "Login successful",
                     auth_object: authObject,
+                    firstName: user.firstName,
                     access_token
                 });
             } else {
