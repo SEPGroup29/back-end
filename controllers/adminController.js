@@ -2,6 +2,8 @@ const VehicleOwner = require('../models/vehicleOwnerModel')
 const FuelStation = require('../models/fuelStationModel')
 const User = require('../models/userModel')
 const Vehicle = require("../models/vehicleModel")
+const UserType = require("../models/userTypesModel")
+const UserTypes = require('../models/userTypesModel')
 
 const getDashboardDetails = async (req, res) => {
     try {
@@ -24,6 +26,28 @@ const getDashboardDetails = async (req, res) => {
     }
 }
 
+const showAllVehicleOwners = async (req, res) => {
+    const { search } = req.params
+    try {
+        if (search === 'null') {
+            var vehicleOwners = await VehicleOwner.find().sort({ name: 1 }).populate('user').populate('fuelQuota')
+            res.status(200).json({ vehicleOwners, result: 'success' });
+        } else {
+            const vehicleOwnersFiltered = []
+            var vehicleOwners = await VehicleOwner.find().sort({ name: 1 }).populate('user').populate('fuelQuota')
+            vehicleOwners.forEach(vo => {
+                if (vo.user.firstName.toLowerCase().includes(search.toLowerCase()) || vo.user.lastName.toLowerCase().includes(search.toLowerCase())){
+                    vehicleOwnersFiltered.push(vo)
+                }
+            });
+            res.status(200).json({ vehicleOwners: vehicleOwnersFiltered, result: 'success' });
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 module.exports = {
-    getDashboardDetails
+    getDashboardDetails,
+    showAllVehicleOwners,
 }
