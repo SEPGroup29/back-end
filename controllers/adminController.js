@@ -36,7 +36,7 @@ const showAllVehicleOwners = async (req, res) => {
             const vehicleOwnersFiltered = []
             var vehicleOwners = await VehicleOwner.find().sort({ name: 1 }).populate('user').populate('fuelQuota')
             vehicleOwners.forEach(vo => {
-                if (vo.user.firstName.includes(search) || vo.user.lastName.includes(search)){
+                if (vo.user.firstName.toLowerCase().includes(search.toLowerCase()) || vo.user.lastName.toLowerCase().includes(search.toLowerCase())){
                     vehicleOwnersFiltered.push(vo)
                 }
             });
