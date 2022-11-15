@@ -37,6 +37,7 @@ app.use('/auth', require('./routes/auth'))
 //API routes
 app.use('/api/vehicle-owner', verifyJWT, require('./routes/api/vehicle_owner'))
 app.use('/api/fuel-station', verifyJWT, require('./routes/api/fuel_station'))
+app.use('/api/admin', verifyJWT, require('./routes/api/admin'))
 
 mongoose.connect(uri, connectionParams)
     .then( () => {
