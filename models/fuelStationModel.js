@@ -15,16 +15,28 @@ const fuelStationSchema = new Schema({
         required: true
     },
     pstock: {
-        type: Number
+        type: Number,
+        default: 0
     },
     dstock: {
-        type: Number
+        type: Number,
+        default: 0
     },
     rpstock: {
-        type: Number
+        type: Number,
+        default: 0
     },
     rdstock: {
-        type: Number
+        type: Number,
+        default: 0
+    },
+    tempPetrolStock: {
+        type: Number,
+        default: 0
+    },
+    tempDieselStock: {
+        type: Number,
+        default: 0
     }
 });
 

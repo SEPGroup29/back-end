@@ -106,7 +106,8 @@ const updateStock = async (req, res) => {
                         { _id: fuelStationId },
                         {
                             pstock: parseFloat(station.pstock) + amount,
-                            rpstock: parseFloat(station.rpstock) + amount
+                            rpstock: parseFloat(station.rpstock) + amount,
+                            tempPetrolStock: parseFloat(station.tempPetrolStock) + amount
                         }
                     )
                     break;
@@ -115,7 +116,8 @@ const updateStock = async (req, res) => {
                         { _id: fuelStationId },
                         {
                             dstock: parseFloat(station.dstock) + amount,
-                            rdstock: parseFloat(station.rdstock) + amount
+                            rdstock: parseFloat(station.rdstock) + amount,
+                            tempDieselStock: parseFloat(station.tempDieselStock) + amount
                         }
                     )
                     break;

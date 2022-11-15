@@ -6,6 +6,7 @@ const RegisteredVehicles = require("../models/registeredVehiclesModel")
 const FuelQuota = require("../models/fuelQuotaModel")
 const Queue = require("../models/queueModel")
 const { getCurrentUser } = require("../helpers/functions/getCurrentUser")
+const FuelStation = require("../models/fuelStationModel")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -232,16 +233,24 @@ const joinQueue = async (req, res) => {
                 res.status(200).json({ error: 'This queue is not available' })
                 return
             }
+            // Check amount is less than fuel quota
+            const user = await getCurrentUser(req)
+            const vo = await VehicleOwner.findOne({ user: user.id }).populate('fuelQuota')
+            pq = fuel === 'petrol' ? vo.fuelQuota.EPQ : vo.fuelQuota.EDQ
+            if (floatAmount > pq) {
+                res.status(200).json({ error: 'Entered amount must be less than allocated quota' })
+                return
+            }
             // Check whether the remaing stock is enough to supply amount entered by vehicle owner
             switch (queue.queueType) {
                 case 'petrol':
-                    if (!(queue.fuelStationId.rpstock >= floatAmount)) {
+                    if (!(queue.fuelStationId.tempPetrolStock >= floatAmount)) {
                         res.status(200).json({ error: 'Fuel stock is not enough' })
                         return
                     }
                     break;
                 case 'diesel':
-                    if (!(queue.fuelStationId.rdstock >= floatAmount)) {
+                    if (!(queue.fuelStationId.tempDieselStock >= floatAmount)) {
                         res.status(200).json({ error: 'Fuel stock is not enough' })
                         return
                     }
@@ -250,8 +259,11 @@ const joinQueue = async (req, res) => {
                     res.status(200).json({ error: 'Invalid queue type' })
                     return
             }
-            const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id })
-            res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}` })
+            // Find queue position
+            const vehicles = await Vehicle.find({ queueId: queue._id })
+            const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount })
+            const updatedFs = fuel === 'petrol' ? await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempPetrolStock - floatAmount }) : await FuelStation.findOneAndUpdate({ _id: queue.fuelStationId.id }, { tempDieselStock: queue.fuelStationId.tempDieselStock - floatAmount })
+            res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}`, joinedVehicle })
         } else {
             res.status(200).json({ error: 'Vehicle not found' })
             return
