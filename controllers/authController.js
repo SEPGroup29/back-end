@@ -63,7 +63,7 @@ const handleRegister = async (req, res) => {
                     //Deleting any otp entry related to this email from otp collection.(For better security and consistency)
                     const otp = await OTP.deleteMany({ email })
 
-                    res.status(200).json({ user, vehicleOwner })
+                    res.status(200).json({ user, vehicleOwner, success: 'Registered Successfully' })
                 } catch (error) {
                     res.status(400).json({ error: error.message })
                 }
