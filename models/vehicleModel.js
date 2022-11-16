@@ -26,11 +26,11 @@ const vehicleSchema = new Schema({
     queueId: {
         type: Schema.Types.ObjectId, ref: 'Queue'
     },
-    queuePosition: {
-        type: Number
-    },
     requestedFuel: {
         type: Number,
+    },
+    eligibleFuel: {
+        type: Boolean,
     }
 })
 

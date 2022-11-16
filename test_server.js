@@ -38,6 +38,7 @@ function server() {
     //API routes
     app.use('/api/vehicle-owner', require('./routes/api/vehicle_owner'))
     app.use('/api/fuel-station', require('./routes/api/fuel_station'))
+    app.use('/api/pump-operator', require('./routes/api/pump_operator'))
 
     // Test routes
     app.use('/test/vehicle-owner', require('./routes/test/vehicle_owner'))
