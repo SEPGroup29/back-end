@@ -17,6 +17,9 @@ const addVehicle = async (req, res) => {
     try {
         // Check for chassis number validity
         const registeredVehicle = await RegisteredVehicles.findOne({ chassisNo })
+        console.log("reg veh",registeredVehicle);
+        console.log("reg veh num",regNo);
+        console.log("chassis Num", chassisNo);
         if (registeredVehicle && registeredVehicle.regNo === regNo) {
             const user = await getCurrentUser(req)
             if (!user) {
