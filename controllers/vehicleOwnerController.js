@@ -92,12 +92,18 @@ const showVehicles = async (req, res) => {
 const deleteVehicle = async (req, res) => {
     const { vehicle_id } = req.params
     try {
-        const vehicle = await Vehicle.findOneAndDelete({ _id: vehicle_id })
-        if (vehicle) {
-            res.status(200).json({ success: 'Deleted' })
-        } else {
-            res.status(200).json({ error: 'Vehicle does not exisis' })
+        const vehicle = await Vehicle.findOne({ _id: vehicle_id })
+        if (!vehicle) {
+            res.status(200).json({ error: 'Vehicle does not exisit' })
+            return
         }
+        if (vehicle.queueId) {
+            res.status(200).json({ error: 'Cannot delete a vehicle when it is in a fuel queue' })
+            return
+        }
+        const deletedVehicle = await Vehicle.findOneAndDelete({ _id: vehicle_id })
+        res.status(200).json({ success: 'Deleted' })
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
