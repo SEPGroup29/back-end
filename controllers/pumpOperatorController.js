@@ -5,11 +5,14 @@ const VehicleOwner = require("../models/vehicleOwnerModel");
 const FuelStation = require('../models/fuelStationModel')
 
 const checkVehicleEligibility = async (req, res) => {
-    const { id, pumpOperatorId } = req.body
+    const id = req.params.voId
+    const pumpOperatorUserId = req.params.poId
+    console.log("id",id)
+    console.log("pumpOperator", pumpOperatorUserId)
     try {
         const vo = await VehicleOwner.findOne({ _id: id })
         const vehicles  = await Vehicle.find({ vehicleOwnerId: vo._id })
-        const po = await PumpOperator.findOne({ _id: pumpOperatorId })
+        const po = await PumpOperator.findOne({ user: pumpOperatorUserId })
         const fsId = po.fuelStationId
         const vehicleList = []
         if (vehicles.length > 0) {
@@ -31,9 +34,7 @@ const checkVehicleEligibility = async (req, res) => {
         }
         else {
             res.status(200).json({ error: 'No vehicles registered' })
-            return
         }
-        res.status(200).json({ fsId });
     }
     catch (error) {
         console.log(error);

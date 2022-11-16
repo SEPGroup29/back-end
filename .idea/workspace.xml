@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Get vehicle owner completed">
+    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Check vehicle eligible function completed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controllers/pumpOperatorController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/pumpOperatorController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/vehicleOwnerController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/vehicleOwnerController.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,7 +88,7 @@
       <workItem from="1668503136101" duration="636000" />
       <workItem from="1668574191507" duration="749000" />
       <workItem from="1668581660453" duration="8630000" />
-      <workItem from="1668617929203" duration="1000000" />
+      <workItem from="1668617929203" duration="5216000" />
     </task>
     <task id="LOCAL-00001" summary="Vehicle Owner Name Get functionality added">
       <created>1664733153798</created>
@@ -133,7 +132,21 @@
       <option name="project" value="LOCAL" />
       <updated>1668590369028</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Get registered vehicle list component">
+      <created>1668618997968</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1668618997968</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Check vehicle eligible function completed">
+      <created>1668619350827</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1668619350827</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -158,6 +171,8 @@
     <MESSAGE value="console.log remove in auth controller" />
     <MESSAGE value="pump operator controller implemented" />
     <MESSAGE value="Get vehicle owner completed" />
-    <option name="LAST_COMMIT_MESSAGE" value="Get vehicle owner completed" />
+    <MESSAGE value="Get registered vehicle list component" />
+    <MESSAGE value="Check vehicle eligible function completed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Check vehicle eligible function completed" />
   </component>
 </project>
