@@ -31,6 +31,10 @@ const vehicleSchema = new Schema({
     },
     requestedFuel: {
         type: Number,
+    },
+    eligibleFuel: {
+        type: Boolean,
+        default: false
     }
 })
 

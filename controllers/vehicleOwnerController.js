@@ -241,17 +241,31 @@ const joinQueue = async (req, res) => {
                 res.status(200).json({ error: 'Entered amount must be less than allocated quota' })
                 return
             }
+            // Find queue position
+            const vehicles = await Vehicle.find({ queueId: queue._id })
             // Check whether the remaing stock is enough to supply amount entered by vehicle owner
             switch (queue.queueType) {
                 case 'petrol':
                     if (!(queue.fuelStationId.tempPetrolStock >= floatAmount)) {
-                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You will be notified when fuel is available`, joinedVehicle })
+                        return
+                    } else {
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
+                        const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempPetrolStock - floatAmount })
+                        res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return
                     }
                     break;
                 case 'diesel':
                     if (!(queue.fuelStationId.tempDieselStock >= floatAmount)) {
-                        res.status(200).json({ error: 'Fuel stock is not enough' })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You will be notified when fuel is available`, joinedVehicle })
+                        return
+                    } else {
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
+                        const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempDieselStock - floatAmount })
+                        res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return
                     }
                     break;
@@ -259,11 +273,6 @@ const joinQueue = async (req, res) => {
                     res.status(200).json({ error: 'Invalid queue type' })
                     return
             }
-            // Find queue position
-            const vehicles = await Vehicle.find({ queueId: queue._id })
-            const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount })
-            const updatedFs = fuel === 'petrol' ? await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempPetrolStock - floatAmount }) : await FuelStation.findOneAndUpdate({ _id: queue.fuelStationId.id }, { tempDieselStock: queue.fuelStationId.tempDieselStock - floatAmount })
-            res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}`, joinedVehicle })
         } else {
             res.status(200).json({ error: 'Vehicle not found' })
             return
