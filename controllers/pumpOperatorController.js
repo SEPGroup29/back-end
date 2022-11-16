@@ -1,8 +1,6 @@
-const mongoose = require('mongoose');
 const Queue = require('../models/queueModel')
 const PumpOperator = require('../models/pumpOperatorModel')
 const Vehicle = require('../models/vehicleModel')
-const User = require("../models/userModel")
 const VehicleOwner = require("../models/vehicleOwnerModel");
 const FuelStation = require('../models/fuelStationModel')
 
@@ -23,6 +21,12 @@ const checkVehicleEligibility = async (req, res) => {
                         vehicleList.push(vehicles[vehicle])
                     }
                 }
+            }
+            if (vehicleList.length > 0) {
+                res.status(200).json({ vehicleList, result: 'success' })
+            }
+            else {
+                res.status(200).json({ error: 'No eligible vehicles found' })
             }
         }
         else {
