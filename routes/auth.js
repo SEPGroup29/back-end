@@ -16,5 +16,6 @@ router
     .get('/new-token', authController.handleNewAccessToken)
     .get('/logout', authController.handleLogout)
     .get('/get-user/:id', authController.getUser)
+    .get('/check',authController.check)
 
 module.exports = router;

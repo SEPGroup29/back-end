@@ -14,7 +14,7 @@ const { sendLoginOtpMail } = require('../services/mail/login_otp_mail');
 const jwt = require('jsonwebtoken')
 const token = require('../utils/token');
 require('dotenv').config();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const ObjectId = require('mongoose').Types.ObjectId;
 const passwordGenerator = require('generate-password');
 const { sendFsRegMail } = require('../services/mail/fs_register_mail');
@@ -445,6 +445,11 @@ const handleNewAccessToken = async (req, res) => {
         })
 }
 
+const check = async (req, res) => {
+    console.log("Check");
+    res.status(200).json({ message: "Check" })
+}
+
 
 // .......................................HELPER FUNCTIONS...................................................
 
@@ -513,4 +518,5 @@ module.exports = {
     handlePumpOperatorSignup,
     handleNewAccessToken,
     getUser,
+    check
 }
