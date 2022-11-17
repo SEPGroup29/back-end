@@ -4,6 +4,7 @@ const router = express.Router();
 // const verifyRoles = require('../../middlewares/verifyRoles');
 
 router
-.get('/check-vehicle-eligibility/:voId/:poId', pumpOperatorController.checkVehicleEligibility)
+    .get('/check-vehicle-eligibility/:voId/:poId', pumpOperatorController.checkVehicleEligibility)
+    .post('/pump-fuel', pumpOperatorController.pumpFuel)
 
 module.exports = router;
