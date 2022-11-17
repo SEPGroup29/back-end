@@ -168,12 +168,13 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
             var newQuota
             switch (preVehicles.length) {
                 case 1:
+                    console.log("INSIDE CASE 1 newQuota", parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100));
                     newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100)
-                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
+                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({_id: vo.fuelQuota.id}, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 case 2:
                     newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation), parseFloat(preVehicles[1].vehicleType.fuelAllocation)) * (60 / 100)
-                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
+                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({_id: vo.fuelQuota.id}, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 default:
                     return false
@@ -218,6 +219,7 @@ const getVehicleTypes = async (req, res) => {
 
 const joinQueue = async (req, res) => {
     const { stationId, fuel, regNo, amount } = req.body
+    console.log({ stationId, fuel, regNo, amount });
     const floatAmount = parseFloat(amount)
     try {
         // Vehicle validity
@@ -248,16 +250,18 @@ const joinQueue = async (req, res) => {
                 return
             }
             // Find queue position
-            const vehicles = await Vehicle.find({ queueId: queue._id })
+            const eligibleVehicles = await Vehicle.find({ queueId: queue._id, eligibleFuel: true })
+            const nonEligibleVehicles = await Vehicle.find({ queueId: queue._id, eligibleFuel: false })
             // Check whether the remaing stock is enough to supply amount entered by vehicle owner
             switch (queue.queueType) {
                 case 'petrol':
                     if (!(queue.fuelStationId.tempPetrolStock >= floatAmount)) {
-                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, tempQueuePosition: nonEligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: 0 })
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You will be notified when fuel is available`, joinedVehicle })
                         return
                     } else {
-                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: eligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
                         const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempPetrolStock - floatAmount })
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return
@@ -265,11 +269,12 @@ const joinQueue = async (req, res) => {
                     break;
                 case 'diesel':
                     if (!(queue.fuelStationId.tempDieselStock >= floatAmount)) {
-                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, tempQueuePosition: nonEligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: false })
+                        const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempDieselStock: 0 })
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You will be notified when fuel is available`, joinedVehicle })
                         return
                     } else {
-                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: vehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
+                        const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: eligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
                         const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempDieselStock - floatAmount })
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return

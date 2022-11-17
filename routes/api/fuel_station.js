@@ -4,7 +4,7 @@ const verifyRoles = require('../../middlewares/verifyRoles');
 const router = express.Router();
 
 router
-    .post('/add-fuel-station', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.insertFuelStation)
+    .post('/register-fuel-station', verifyRoles(process.env.ADMIN), fuelStationController.insertFuelStation)
     .get('/show-all-fuel-stations/:search', verifyRoles(process.env.ADMIN, process.env.VEHICLE_OWNER), fuelStationController.showAllFuelStations)
     .post('/update-stock', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.updateStock)
     .get('/get-stock/:fs_id', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.getStock)

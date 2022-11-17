@@ -29,12 +29,14 @@ const vehicleSchema = new Schema({
     queuePosition: {
         type: Number
     },
+    tempQueuePosition: {
+        type: Number
+    },
     requestedFuel: {
         type: Number,
     },
     eligibleFuel: {
-        type: Boolean,
-        default: false
+        type: Boolean
     }
 })
 
