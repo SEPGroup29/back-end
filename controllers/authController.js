@@ -445,6 +445,11 @@ const handleNewAccessToken = async (req, res) => {
         })
 }
 
+const check = async (req, res) => {
+    console.log("Check");
+    res.status(200).json({ message: "Check" })
+}
+
 
 // .......................................HELPER FUNCTIONS...................................................
 
@@ -513,4 +518,5 @@ module.exports = {
     handlePumpOperatorSignup,
     handleNewAccessToken,
     getUser,
+    check
 }
