@@ -11,7 +11,7 @@ const checkVehicleEligibility = async (req, res) => {
     console.log("pumpOperator", pumpOperatorUserId)
     try {
         const vo = await VehicleOwner.findOne({ _id: id })
-        const vehicles  = await Vehicle.find({ vehicleOwnerId: vo._id })
+        const vehicles  = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType')
         const po = await PumpOperator.findOne({ user: pumpOperatorUserId })
         const fsId = po.fuelStationId
         const vehicleList = []
