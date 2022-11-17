@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Vehicle type populated">
+    <list default="true" id="d30b0f8a-c728-4196-b3e9-62b93cab4df9" name="Changes" comment="Fuel Pump function completed without updating fuel station side">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controllers/pumpOperatorController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/pumpOperatorController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/api/pump_operator.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/api/pump_operator.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +95,7 @@
       <workItem from="1668574191507" duration="749000" />
       <workItem from="1668581660453" duration="8630000" />
       <workItem from="1668617929203" duration="9469000" />
-      <workItem from="1668695367023" duration="5298000" />
+      <workItem from="1668695367023" duration="6871000" />
     </task>
     <task id="LOCAL-00001" summary="Vehicle Owner Name Get functionality added">
       <created>1664733153798</created>
@@ -168,7 +167,14 @@
       <option name="project" value="LOCAL" />
       <updated>1668697585808</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Fuel Pump function completed without updating fuel station side">
+      <created>1668703005830</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1668703005830</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -197,6 +203,7 @@
     <MESSAGE value="Check vehicle eligible function completed" />
     <MESSAGE value="get req refine" />
     <MESSAGE value="Vehicle type populated" />
-    <option name="LAST_COMMIT_MESSAGE" value="Vehicle type populated" />
+    <MESSAGE value="Fuel Pump function completed without updating fuel station side" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fuel Pump function completed without updating fuel station side" />
   </component>
 </project>

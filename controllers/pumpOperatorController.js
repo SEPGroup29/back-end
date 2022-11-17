@@ -50,12 +50,15 @@ const pumpFuel = async (req, res) => {
   try {
     await Vehicle.update(
       { _id: vehicleId },
-      { $set: { eligibleFuel: false, requestedFuel: 0 } }
+      { $set: { eligibleFuel: false, requestedFuel: 0, queueId: null } }
     );
     const vehicle = await Vehicle.findOne({ _id: vehicleId }).populate(
       "vehicleOwnerId"
     );
-    const pumpOperator = await PumpOperator.findOne({ _id: pumpOperatorId });
+
+    const pumpOperator = await PumpOperator.findOne({ user: pumpOperatorId });
+
+    console.log("pumpOperator", pumpOperator);
     const fuelStation = await FuelStation.findOne({
       _id: pumpOperator.fuelStationId,
     });
