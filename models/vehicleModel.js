@@ -26,12 +26,15 @@ const vehicleSchema = new Schema({
     queueId: {
         type: Schema.Types.ObjectId, ref: 'Queue'
     },
+    tempQueuePosition: {
+        type: Number
+    },
     requestedFuel: {
         type: Number,
     },
     eligibleFuel: {
-        type: Boolean,
-    }
+        type: Boolean
+    },
 })
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
