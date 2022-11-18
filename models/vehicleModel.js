@@ -26,9 +26,6 @@ const vehicleSchema = new Schema({
     queueId: {
         type: Schema.Types.ObjectId, ref: 'Queue'
     },
-    queuePosition: {
-        type: Number
-    },
     tempQueuePosition: {
         type: Number
     },
@@ -37,7 +34,7 @@ const vehicleSchema = new Schema({
     },
     eligibleFuel: {
         type: Boolean
-    }
+    },
 })
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
