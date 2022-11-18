@@ -7,6 +7,8 @@ const FuelQuota = require("../models/fuelQuotaModel")
 const Queue = require("../models/queueModel")
 const { getCurrentUser } = require("../helpers/functions/getCurrentUser")
 const FuelStation = require("../models/fuelStationModel")
+const { sendQueueMail } = require("../services/mail/queue_mail")
+const moment = require("moment/moment")
 
 const addVehicle = async (req, res) => {
     const { regNo, chassisNo, vehicleType, fuelType } = req.body
@@ -170,11 +172,11 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
                 case 1:
                     console.log("INSIDE CASE 1 newQuota", parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100));
                     newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation)) * (60 / 100)
-                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({_id: vo.fuelQuota.id}, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
+                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ _id: vo.fuelQuota.id }, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 case 2:
                     newQuota = parseFloat(currentQuota) + Math.min(parseFloat(newVehicleQuota), parseFloat(preVehicles[0].vehicleType.fuelAllocation), parseFloat(preVehicles[1].vehicleType.fuelAllocation)) * (60 / 100)
-                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({_id: vo.fuelQuota.id}, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
+                    var quota = fuelType === 'petrol' ? await FuelQuota.findOneAndUpdate({ _id: vo.fuelQuota.id }, { EPQ: newQuota }) : await FuelQuota.findOneAndUpdate({ EDQ: vehicle.fuelAllocation })
                     break;
                 default:
                     return false
@@ -263,6 +265,10 @@ const joinQueue = async (req, res) => {
                     } else {
                         const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: eligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
                         const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempPetrolStock - floatAmount })
+                        console.log(joinedVehicle);
+                        //send email
+                        const result = await sendQueueMail({ to: user.email, date: moment().format('D/MM/YYYY'), fsName: queue.fuelStationId.name, city: queue.fuelStationId.nearCity, regNo, queueType: fuel, position: eligibleVehicles.length + 1 })
+
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return
                     }
@@ -276,6 +282,10 @@ const joinQueue = async (req, res) => {
                     } else {
                         const joinedVehicle = await Vehicle.updateOne({ regNo }, { queueId: queue._id, queuePosition: eligibleVehicles.length + 1, requestedFuel: floatAmount, eligibleFuel: true })
                         const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId.id }, { tempPetrolStock: queue.fuelStationId.tempDieselStock - floatAmount })
+
+                        //send email
+                        const result = await sendQueueMail({ to: user.email, date: moment().format('D/MM/YYYY'), fsName: queue.fuelStationId.name, city: queue.fuelStationId.nearCity, regNo, queueType: fuel, position: eligibleVehicles.length + 1 })
+
                         res.status(200).json({ success: `Vehicle ${regNo} successfully joined to ${queue.fuelStationId.name}, ${queue.fuelStationId.nearCity}. You can refill today!`, joinedVehicle })
                         return
                     }

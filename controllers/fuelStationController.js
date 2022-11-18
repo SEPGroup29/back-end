@@ -8,6 +8,7 @@ const PumpOperator = require('../models/pumpOperatorModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const Vehicle = require('../models/vehicleModel');
 const Queue = require('../models/queueModel');
+const { sendQueueMail } = require('../services/mail/queue_mail');
 
 const insertFuelStation = async (req, res) => {
     const { name, nearCity, ownerName, mnFirstName, mnLastName, contactNumber, mnEmail } = req.body
@@ -108,8 +109,8 @@ const updateStock = async (req, res) => {
                     updatedStation = await FuelStation.updateOne(
                         { _id: fuelStationId },
                         {
-                            pstock: parseFloat(station.pstock) + amount,
                             rpstock: parseFloat(station.rpstock) + amount,
+                            pstock: parseFloat(station.rpstock) + amount > station.pstock ? parseFloat(station.rpstock) + amount : station.pstock,    // TODO:
                             tempPetrolStock: parseFloat(station.rpstock) + amount
                         }
                     )
@@ -119,8 +120,8 @@ const updateStock = async (req, res) => {
                     updatedStation = await FuelStation.updateOne(
                         { _id: fuelStationId },
                         {
-                            dstock: parseFloat(station.dstock) + amount,
                             rdstock: parseFloat(station.rdstock) + amount,
+                            dstock: parseFloat(station.rdstock) + amount > station.dstock ? parseFloat(station.rdstock) + amount : station.dstock,    // TODO:
                             tempDieselStock: parseFloat(station.rdstock) + amount
                         }
                     )
@@ -170,23 +171,19 @@ const getThreeFuelStations = async (req, res) => {
 
 // Update the fuel queues whenever the stock is updated
 const updateQueue = async (fuel, fuelStationId) => {
-    console.log("INSIDE UPDATE QUEUE");
     try {
         const petrolQueue = await Queue.findOne({ fuelStationId, queueType: 'petrol' })
         const dieselQueue = await Queue.findOne({ fuelStationId, queueType: 'diesel' })
-        console.log("PETROL QUEUE", petrolQueue);
         var regulated, newQueue
         if (petrolQueue) {
-            // Deleting any eligible vehicle on previous day that are still stay as eligible
+            // Deleting any eligible vehicle on previous day that didn't arrived
             await Vehicle.updateMany({ queueId: petrolQueue.id, eligibleFuel: true }, { eligibleFuel: false, queueId: null, queuePosition: 0, requestedFuel: 0 })
 
             // Make non eligible vehicles as eligible considering fuel quota
             regulated = await regulateQueue(fuelStationId, petrolQueue)
         } else {
-            console.log("INSIDE CREATING A NEW PETROL QUEUE");
             // Initiate the petrol queue
             newQueue = await Queue.create({ queueType: 'petrol', fuelStationId })
-            console.log("NEW Q", newQueue);
         }
         if (dieselQueue) {
             // Deleting any eligible vehicle on previous day that are still stay as eligible
@@ -206,18 +203,16 @@ const updateQueue = async (fuel, fuelStationId) => {
 }
 
 const regulateQueue = async (fuelStationId, queue) => {
-    console.log("INSIDE REGULATE QUEUE");
     try {
         const nonEligibleVehicles = await Vehicle.find({ queueId: queue.id, eligibleFuel: false }).sort({ tempQueuePosition: 1 })
         let i = 1
+
+        // Make each uneligible vehicle eligible until stock limit exceeds
         for (const v of nonEligibleVehicles) {
-            // TODO: Chceck with tempStock before assign
-            console.log("v", v);
             const station = await FuelStation.findOne({ _id: fuelStationId })
             const tempStock = queue.queueType === 'petrol' ? station.tempPetrolStock : station.tempDieselStock  // Get real time stocks
             const ts = queue.queueType === 'petrol' ? 'tempPetrolStock' : 'tempDieselStock'  // Get real time stocks
             if (tempStock >= v.requestedFuel) {
-                console.log("INSIDE IF");
                 const eligibled = await Vehicle.updateOne({ _id: v.id }, { eligibleFuel: true, queuePosition: i, tempQueuePosition: 0 })
                 const updatedFs = await FuelStation.updateOne({ _id: fuelStationId }, { [ts]: tempStock - v.requestedFuel }) // Update with reduced stock
             } else {
