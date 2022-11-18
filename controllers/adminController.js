@@ -4,6 +4,7 @@ const User = require('../models/userModel')
 const Vehicle = require("../models/vehicleModel")
 const UserType = require("../models/userTypesModel")
 const UserTypes = require('../models/userTypesModel')
+const Queue = require('../models/fuelQuotaModel')
 
 const getDashboardDetails = async (req, res) => {
     try {
@@ -11,14 +12,16 @@ const getDashboardDetails = async (req, res) => {
         const fuelStationCount = await FuelStation.countDocuments()
         const userCount = await User.countDocuments()
         const vehicleCount = await Vehicle.countDocuments()
+        const queueCount = await Queue.countDocuments({active: true})
 
         res.status(200).json({
             vehicleOwnerCount,
             fuelStationCount,
             userCount,
-            vehicleCount
+            vehicleCount,
+            queueCount,
         })
-        console.log(vehicleOwnerCount, fuelStationCount, userCount, vehicleCount)
+        console.log(vehicleOwnerCount, fuelStationCount, userCount, vehicleCount, queueCount)
     } catch (error) {
         res.status(500).json({
             message: error.message
