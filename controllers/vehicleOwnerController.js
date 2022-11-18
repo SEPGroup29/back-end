@@ -19,9 +19,6 @@ const addVehicle = async (req, res) => {
     try {
         // Check for chassis number validity
         const registeredVehicle = await RegisteredVehicles.findOne({ chassisNo })
-        console.log("reg veh",registeredVehicle);
-        console.log("reg veh num",regNo);
-        console.log("chassis Num", chassisNo);
         if (registeredVehicle && registeredVehicle.regNo === regNo) {
             const user = await getCurrentUser(req)
             if (!user) {
@@ -47,10 +44,25 @@ const addVehicle = async (req, res) => {
                             if (result) {
                                 //Enter to database
                                 try {
-                                    // Update fuel quota
-                                    const updatedQuota = await updateQuota(result, fuelType, vo.id, vo)
+                                    // TODO: Delete these commented lines if new func is success
+                                    // // Update fuel quota
+                                    // const updatedQuota = await updateQuota(result, fuelType, vo.id, vo)
+                                    // // Add vehicle
+                                    // const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: vo.id })
+
+                                    //FIXME:
                                     // Add vehicle
                                     const vehicle = await Vehicle.create({ regNo, chassisNo, vehicleType: result.id, fuelType, vehicleOwnerId: vo.id })
+                                    if (!vehicle) {
+                                        res.status(200).json({ error: 'Vehicle creation failed' })
+                                        return
+                                    }
+                                    // Update fuel quotas
+                                    const updatedQuotas = await updateQuota(vo.id)
+                                    if (!updatedQuotas.newPetrolQuota || !updatedQuotas.newDieselQuota) {
+                                        res.status(200).json({ error: 'Quota update failed/partially completed' })
+                                        return
+                                    }
                                     res.status(200).json(vehicle)
                                 } catch (error) {
                                     res.status(400).json({ error: error.message })
@@ -113,6 +125,14 @@ const deleteVehicle = async (req, res) => {
             return
         }
         const deletedVehicle = await Vehicle.findOneAndDelete({ _id: vehicle_id })
+
+        // Update fuel quotas
+        const updatedQuotas = await updateQuota(vehicle.vehicleOwnerId)
+        if (!updatedQuotas.newPetrolQuota || !updatedQuotas.newDieselQuota) {
+            res.status(200).json({ error: 'Quota update failed/partially completed' })
+            return
+        }
+
         res.status(200).json({ success: 'Deleted' })
 
     } catch (error) {
@@ -169,7 +189,7 @@ const showOneVehicle = async (req, res) => {
 }
 
 // Fuel quota update after adding a new vehicle
-const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
+const updateQuotaOld = async (vehicle, fuelType, vehicleOwnerId, vo) => {
     try {
         const preVehicles = await Vehicle.find({ vehicleOwnerId, fuelType }).populate("vehicleType")
         if (preVehicles.length > 0) {
@@ -215,6 +235,77 @@ const updateQuota = async (vehicle, fuelType, vehicleOwnerId, vo) => {
         }
     } catch (error) {
         return false
+    }
+}
+
+// Fuel quota update after adding/deleting a new vehicle
+const updateQuota = async (vehicleOwnerId) => {
+    try {
+        const pVehicles = await Vehicle.find({ vehicleOwnerId, fuelType: 'petrol' }).populate('vehicleType')
+        const dVehicles = await Vehicle.find({ vehicleOwnerId, fuelType: 'diesel' }).populate('vehicleType')
+
+        // Calculate new petrol and diesel quotas
+        const newPetrolQuota = await calculateQuota(vehicleOwnerId, pVehicles, 'EPQ')
+        const newDieselQuota = await calculateQuota(vehicleOwnerId, dVehicles, 'EDQ')
+        return { newPetrolQuota, newDieselQuota }
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+const calculateQuota = async (vehicleOwnerId, vehicles, fuelQuotaName) => {
+    var newQuota
+    const vo = await VehicleOwner.findOne({ _id: vehicleOwnerId }).populate('fuelQuota')
+
+    try {
+        // Just add 0 if there is no vehicles
+        if (vehicles.length == 0) {
+            // Ceheck for any existing quota under the vehicle owner
+            if (vo.fuelQuota) {
+                newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: 0 })
+                return newQuota
+            }
+            newQuota = await FuelQuota.create({ [fuelQuotaName]: 0 })
+            var updatedVo = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: newQuota._id })
+            return newQuota
+        }
+        // Just add defaultQuota if there is 1 vehicle
+        if (vehicles.length == 1) {
+            // Ceheck for any existing quota under the vehicle owner
+            if (vo.fuelQuota) {
+                newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: vehicles[0].vehicleType.fuelAllocation })
+                return newQuota
+            }
+            newQuota = await FuelQuota.create({ [fuelQuotaName]: vehicles[0].vehicleType.fuelAllocation })
+            var updatedVo = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: newQuota._id })
+            return newQuota
+        }
+
+        const defaultQuotas = []
+        vehicles.forEach(vehicle => {
+            defaultQuotas.push(vehicle.vehicleType.fuelAllocation)
+        });
+        defaultQuotas.sort(function (a, b) { return b - a })    // Sort defaultQuotas in descending order
+        console.log("DEF QUOT ARR", defaultQuotas);
+
+        // Calculate new quota
+        q = defaultQuotas[0] + (defaultQuotas[1] * (60 / 100))
+        for (let i = 2; i < defaultQuotas.length; i++) {
+            q += defaultQuotas[i] * (60 / 100)
+        }
+        console.log("q", q);
+
+        // Ceheck for any existing quota under the vehicle owner
+        if (vo.fuelQuota) {
+            console.log("QUOT EXISTS");
+            newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: q })
+            return newQuota
+        }
+        newQuota = await FuelQuota.create({ [fuelQuotaName]: q })
+        var updatedVo = await VehicleOwner.findOneAndUpdate({ _id: vehicleOwnerId }, { fuelQuota: newQuota._id })
+        return newQuota
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 }
 
@@ -352,9 +443,9 @@ const withdrawFromQueue = async (req, res) => {
         )
 
         // Add the amount of withdrawed vehicle to temp stock
-        const queue = await Queue.findOne({_id: queueId})
+        const queue = await Queue.findOne({ _id: queueId })
         const tempQueue = queue.queueType === 'petrol' ? 'tempPetrolStock' : 'tempDieselStock'
-        const updatedFs = await FuelStation.updateOne({_id: queue.fuelStationId}, {$inc: {[tempQueue]: vehicle.requestedFuel}})
+        const updatedFs = await FuelStation.updateOne({ _id: queue.fuelStationId }, { $inc: { [tempQueue]: vehicle.requestedFuel } })
         res.status(200).json({ success: 'Successfully withdrawed from the queue' })
     } catch (error) {
         res.status(400).json({ error: error.message })
