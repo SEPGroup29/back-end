@@ -7,8 +7,6 @@ const FuelStation = require("../models/fuelStationModel");
 const checkVehicleEligibility = async (req, res) => {
   const id = req.params.voId;
   const pumpOperatorUserId = req.params.poId;
-  console.log("id", id);
-  console.log("pumpOperator", pumpOperatorUserId);
   try {
     const vo = await VehicleOwner.findOne({ _id: id });
     const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate(
@@ -46,11 +44,19 @@ const checkVehicleEligibility = async (req, res) => {
 
 const pumpFuel = async (req, res) => {
   const { vehicleId, pumpOperatorId, fuelQuantity } = req.body;
+  console.log(fuelQuantity);
 
   try {
     await Vehicle.update(
       { _id: vehicleId },
-      { $set: { eligibleFuel: false, requestedFuel: 0, queueId: null } }
+      {
+        $set: {
+          eligibleFuel: false,
+          requestedFuel: 0,
+          queueId: null,
+          queuePosition: 0,
+        },
+      }
     );
     const vehicle = await Vehicle.findOne({ _id: vehicleId }).populate(
       "vehicleOwnerId"
@@ -68,14 +74,20 @@ const pumpFuel = async (req, res) => {
         { _id: vehicle.vehicleOwnerId._id },
         { $set: { consumedPQ: newConsumedPQ } }
       );
-      //need to update fuel station stock
+      await FuelStation.update(
+        { _id: pumpOperator.fuelStationId },
+        { $set: { rpstock: fuelStation.rpstock - fuelQuantity } }
+      );
     } else if (vehicle.fuelType === "diesel") {
       const newConsumedDQ = vehicle.vehicleOwnerId.consumedDQ + fuelQuantity;
       await VehicleOwner.update(
         { _id: vehicle.vehicleOwnerId._id },
         { $set: { consumedDQ: newConsumedDQ } }
       );
-      //need to update fuel station stock
+      await FuelStation.update(
+        { _id: pumpOperator.fuelStationId },
+        { $set: { rdstock: fuelStation.rdstock - fuelQuantity } }
+      );
     } else {
       res.status(200).json({ error: "Something Went Wrong" });
       return;
