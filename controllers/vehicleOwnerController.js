@@ -85,6 +85,12 @@ const showVehicles = async (req, res) => {
         const vo = await VehicleOwner.findOne({ user: user._id })
         if (vo) {
             const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
+            // const qVehicles = []
+            // vehicles.forEach(vehicle => {
+            //     if (vehicle.queueId) {
+            //         qVehicles.push(vehicle)
+            //     }
+            // });
             res.status(200).json({ vehicles })
         } else {
             res.status(200).json({ error: 'Vehicle owner not found' })
@@ -306,6 +312,55 @@ const joinQueue = async (req, res) => {
     }
 }
 
+const showQueue = async (req, res) => {
+    const { queueId } = req.params
+
+    try {
+        const queue = await Queue.findOne({ _id: queueId }).populate('fuelStationId')
+        if (!queue) {
+            res.status(200).json({ error: 'Queue not found' })
+            return
+        }
+        res.status(200).json({ queue })
+    } catch (error) {
+        res.status(404).json({ error: error.message })
+    }
+}
+
+const withdrawFromQueue = async (req, res) => {
+    const { queueId, regNo } = req.params
+    try {
+        const vehicle = await Vehicle.findOne({ queueId, regNo })
+        console.log("VEHICLE FOUND", vehicle)
+        if (!vehicle) {
+            res.status(200).json({ error: 'Vehicle not found in this queue' })
+            return
+        }
+        if (vehicle.queuePosition > 0) {
+            res.status(200).json({ error: 'Cannot withdraw while the vehicle is in an eligible queue' })
+            return
+        }
+        const modifiedVehicle = await Vehicle.updateOne(
+            { _id: vehicle.id },
+            {
+                eligibleFuel: false,
+                queueId: null,
+                requestedFuel: 0,
+                tempQueuePosition: 0,
+                queuePosition: 0
+            }
+        )
+
+        // Add the amount of withdrawed vehicle to temp stock
+        const queue = await Queue.findOne({_id: queueId})
+        const tempQueue = queue.queueType === 'petrol' ? 'tempPetrolStock' : 'tempDieselStock'
+        const updatedFs = await FuelStation.updateOne({_id: queue.fuelStationId}, {$inc: {[tempQueue]: vehicle.requestedFuel}})
+        res.status(200).json({ success: 'Successfully withdrawed from the queue' })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
 module.exports = {
     addVehicle,
     showVehicles,
@@ -315,4 +370,6 @@ module.exports = {
     showOneVehicle,
     getVehicleTypes,
     joinQueue,
+    showQueue,
+    withdrawFromQueue,
 }
