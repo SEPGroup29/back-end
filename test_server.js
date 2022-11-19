@@ -13,7 +13,7 @@ function server() {
 
     // Connect DB & start server
     const mongoose = require('mongoose');
-    const uri = process.env.MONGO_URI
+    const uri = process.env.MONGO_URI_TEST
 
     const connectionParams = {
         useNewUrlParser: true,
@@ -23,7 +23,7 @@ function server() {
 
     mongoose.connect(uri, connectionParams)
         .then(() => {
-            console.log('Connected to database')
+            console.log('Connected to test database')
             app.listen(PORT, function () {
                 console.log("Server is running on Port: " + PORT);
             });
