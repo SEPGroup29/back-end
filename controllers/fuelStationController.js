@@ -114,7 +114,7 @@ const updateStock = async (req, res) => {
                             tempPetrolStock: parseFloat(station.rpstock) + amount
                         }
                     )
-                    result = await updateQueue(fuel, fuelStationId)
+                    // result = await updateQueue(fuel, fuelStationId)
                     break;
                 case 'Diesel':
                     updatedStation = await FuelStation.updateOne(
@@ -125,21 +125,21 @@ const updateStock = async (req, res) => {
                             tempDieselStock: parseFloat(station.rdstock) + amount
                         }
                     )
-                    result = await updateQueue(fuel, fuelStationId)
+                    // result = await updateQueue(fuel, fuelStationId)
                     break;
                 default:
                     break;
             }
-            console.log("RESULT", result);
-            if (!result) {
-                res.status(200).json({ error: 'Queue updation failed' })
-            }
-            if (result.regulated) {
-                res.status(200).json({ updatedStation, success: 'Queue regulated successfully' })
-            }
-            if (result.newQueue) {
-                res.status(200).json({ updatedStation, success: `New queues initiated successfully` })
-            }
+            // console.log("RESULT", result);
+            // if (!result) {
+            //     res.status(200).json({ error: 'Queue updation failed' })
+            // }
+            // if (result.regulated) {
+            res.status(200).json({ updatedStation, success: 'Stock updated successfully' })
+            // }
+            // if (result.newQueue) {
+            // res.status(200).json({ updatedStation, success: `New queues initiated successfully` })
+            // }
         } else {
             res.status(200).json({ error: 'Fuel station not found' })
         }
@@ -173,6 +173,8 @@ const getQueueCount = async (req, res) => {
     try {
         const petrolTokens = await countQ(fuelStationId, 'petrol')
         const dieselTokens = await countQ(fuelStationId, 'diesel')
+        console.log("Petrol tokens", petrolTokens);
+        console.log("Diesell tokens", dieselTokens);
         if (petrolTokens && dieselTokens) {
             console.log(petrolTokens, dieselTokens);
             res.status(200).json({ petrolTokens, dieselTokens })
@@ -189,6 +191,10 @@ const countQ = async (fuelStationId, queueType) => {
         const queue = await Queue.findOne({ fuelStationId, queueType })
         console.log(`${queueType} QUEUE`, queue);
 
+        if (!queue) {
+            return { allTokens: 0, todayTokens: 0 }
+        }
+
         const allTokens = await Vehicle.countDocuments({ queueId: queue.id })
         const todayTokens = await Vehicle.countDocuments({ queueId: queue.id, eligibleFuel: true })
         return { allTokens, todayTokens }
@@ -199,8 +205,21 @@ const countQ = async (fuelStationId, queueType) => {
 
 // ========================= Helper functions ===============================================
 
+// Node scheduler function that runs at 12 midnight and update queues
+const schedule = require('node-schedule');
+
+const job = schedule.scheduleJob('0 0 0 * * ?', async function () {
+    console.log("===================QUEUE UPDATING===============");
+    const fuelStations = await FuelStation.find()
+    for (const station in fuelStations) {
+        const update = await updateQueue(station, station.id)
+    }
+    console.log("===================QUEUE UPDATED===============");
+});
+
 // Update the fuel queues whenever the stock is updated
-const updateQueue = async (fuel, fuelStationId) => {
+const updateQueue = async (fs, fuelStationId) => {
+    console.log("INSIDE UODATE");
     try {
         const petrolQueue = await Queue.findOne({ fuelStationId, queueType: 'petrol' })
         const dieselQueue = await Queue.findOne({ fuelStationId, queueType: 'diesel' })
@@ -208,6 +227,9 @@ const updateQueue = async (fuel, fuelStationId) => {
         if (petrolQueue) {
             // Deleting any eligible vehicle on previous day that didn't arrived
             await Vehicle.updateMany({ queueId: petrolQueue.id, eligibleFuel: true }, { eligibleFuel: false, queueId: null, queuePosition: 0, requestedFuel: 0 })
+
+            //TODO:
+            const updatedFS = await FuelStation.updateOne({ _id: fuelStationId }, { tempPetrolStock: fs.rpstock })
 
             // Make non eligible vehicles as eligible considering fuel quota
             regulated = await regulateQueue(fuelStationId, petrolQueue)
@@ -218,6 +240,9 @@ const updateQueue = async (fuel, fuelStationId) => {
         if (dieselQueue) {
             // Deleting any eligible vehicle on previous day that are still stay as eligible
             await Vehicle.updateMany({ queueId: dieselQueue.id, eligibleFuel: true }, { eligibleFuel: false, queueId: null, queuePosition: 0, requestedFuel: 0 })
+
+            //TODO:
+            const updatedFS = await FuelStation.updateOne({ _id: fuelStationId }, { tempDieselStock: fs.rdstock })
 
             // Make non eligible vehicles as eligible considering fuel quota
             regulated = await regulateQueue(fuelStationId, dieselQueue)
@@ -237,13 +262,16 @@ const regulateQueue = async (fuelStationId, queue) => {
     try {
         const nonEligibleVehicles = await Vehicle.find({ queueId: queue.id, eligibleFuel: false }).sort({ tempQueuePosition: 1 })
         let i = 1
+        console.log("NON ELIGIBLE", nonEligibleVehicles);
 
         // Make each uneligible vehicle eligible until stock limit exceeds
         for (const v of nonEligibleVehicles) {
             const station = await FuelStation.findOne({ _id: fuelStationId })
             const tempStock = queue.queueType === 'petrol' ? station.tempPetrolStock : station.tempDieselStock  // Get real time stocks
             const ts = queue.queueType === 'petrol' ? 'tempPetrolStock' : 'tempDieselStock'  // Get real time stocks
+            console.log("tempStock, v.requestedFuel", tempStock, v.requestedFuel);
             if (tempStock >= v.requestedFuel) {
+                console.log("TEMP IS ENOUGH");
                 const eligibled = await Vehicle.updateOne({ _id: v.id }, { eligibleFuel: true, queuePosition: i, tempQueuePosition: 0 })
                 const updatedFs = await FuelStation.updateOne({ _id: fuelStationId }, { [ts]: tempStock - v.requestedFuel }) // Update with reduced stock
             } else {
