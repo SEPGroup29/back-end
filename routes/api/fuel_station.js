@@ -10,5 +10,6 @@ router
     .get('/get-stock/:fs_id', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.getStock)
     .get('/get-three-fuel-stations', verifyRoles(process.env.VEHICLE_OWNER), fuelStationController.getThreeFuelStations)
     .get('/show-fuel-station', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.showFuelStation)
+    .get('/get-queue-count/:fuelStationId', verifyRoles(process.env.FUEL_STATION_MANAGER), fuelStationController.getQueueCount)
 
 module.exports = router;

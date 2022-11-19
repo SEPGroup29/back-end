@@ -30,6 +30,9 @@ const handleEmailExistance = async (req, res) => {
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
             res.status(200).json({ result: 'Email already exists' })
         } else {
+            // Delete already existing otps
+            const deleteOTP = await OTP.deleteMany({ email })
+            
             const { result, mail_status } = await generateAndSendOtp(email, 'Registration')
             if (result && mail_status)
                 res.status(200).json({ result: 'Sent' })
@@ -89,6 +92,9 @@ const handleLoginVehicleOwner = async (req, res) => {
     try {
         const user = await User.findOne({ email }).populate('userType');
         if (user && user.userType.id == process.env.VEHICLE_OWNER) {
+            // Delete already existing otps
+            const deleteOTP = await OTP.deleteMany({ email })
+
             const { result, mail_status } = await generateAndSendOtp(email, 'Login')
             if (result && mail_status)
                 // res.status(200).json({ result: 'Sent' }) 
@@ -246,8 +252,8 @@ const handleFsLogin = async (req, res) => {
     }
 }
 
-const handleManagerSignup = async ( name, nearCity, ownerName,firstName, lastName, contactNumber, email, fuelStationId) => {
-    console.log({ firstName, lastName, contactNumber, email, fuelStationId }); 
+const handleManagerSignup = async (name, nearCity, ownerName, firstName, lastName, contactNumber, email, fuelStationId) => {
+    console.log({ firstName, lastName, contactNumber, email, fuelStationId });
     try {
         // Check for existance
         const existingUser = await User.findOne({ email }).populate('userType');
@@ -270,13 +276,13 @@ const handleManagerSignup = async ( name, nearCity, ownerName,firstName, lastNam
         const userType = await UserTypes.findOne({ id: process.env.FUEL_STATION_MANAGER })
         const login = await Login.findOne({ loginType: process.env.PASSWORD_LOGIN })
         const user = await User.create({ email: email, firstName, lastName, loginType: login._id, userType: userType._id })
-        
-        const manager = await Manager.create({ user: user._id, contactNumber, password: hash, fuelStationId })
-        
-        //send email
-        const result = await sendFsRegMail({password,to:email, name, nearCity, ownerName})
 
-        if(!result){
+        const manager = await Manager.create({ user: user._id, contactNumber, password: hash, fuelStationId })
+
+        //send email
+        const result = await sendFsRegMail({ password, to: email, name, nearCity, ownerName })
+
+        if (!result) {
             return false
         }
         return manager
@@ -363,7 +369,7 @@ const handleLogout = async (req, res) => {
         return res.status(204).json({ "message": "No token found" });
     }
 
-    const refresh_token = cookies.jwt; 
+    const refresh_token = cookies.jwt;
     const auth = await User.findOne({ refresh_token })
 
     if (!auth) {
@@ -493,8 +499,8 @@ const getLoginData = async (user, email, role) => {
     const { authObject, access_token, refresh_token } = createAndSaveTokens(user, role)
 
     // Saving refresh token in database
-    const userType = await UserTypes.findOne({id: role})
-    const result = await User.findOneAndUpdate({ email, userType:userType._id }, { refreshToken: refresh_token })
+    const userType = await UserTypes.findOne({ id: role })
+    const result = await User.findOneAndUpdate({ email, userType: userType._id }, { refreshToken: refresh_token })
     console.log("refresh token", refresh_token);
     console.log("access token", access_token);
     return ({

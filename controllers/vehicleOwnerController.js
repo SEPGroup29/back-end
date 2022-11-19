@@ -97,13 +97,18 @@ const showVehicles = async (req, res) => {
         const vo = await VehicleOwner.findOne({ user: user._id })
         if (vo) {
             const vehicles = await Vehicle.find({ vehicleOwnerId: vo._id }).populate('vehicleType');
-            // const qVehicles = []
-            // vehicles.forEach(vehicle => {
-            //     if (vehicle.queueId) {
-            //         qVehicles.push(vehicle)
-            //     }
-            // });
-            res.status(200).json({ vehicles })
+            
+            const qVehicles = []
+            const maxTokens = []
+            for (const v of vehicles) {
+                if (v.queueId) {
+                    qVehicles.push(v)
+                    qCapacity = await Vehicle.countDocuments({queueId: v.queueId, eligibleFuel: true})
+                    maxTokens.push(qCapacity)
+                }
+            }
+
+            res.status(200).json({ vehicles, qVehicles, maxTokens })
         } else {
             res.status(200).json({ error: 'Vehicle owner not found' })
         }
@@ -262,7 +267,7 @@ const calculateQuota = async (vehicleOwnerId, vehicles, fuelQuotaName) => {
         if (vehicles.length == 0) {
             // Ceheck for any existing quota under the vehicle owner
             if (vo.fuelQuota) {
-                newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: 0 })
+                newQuota = await FuelQuota.updateOne({ _id: vo.fuelQuota.id }, { [fuelQuotaName]: 0 })
                 return newQuota
             }
             newQuota = await FuelQuota.create({ [fuelQuotaName]: 0 })
@@ -273,7 +278,7 @@ const calculateQuota = async (vehicleOwnerId, vehicles, fuelQuotaName) => {
         if (vehicles.length == 1) {
             // Ceheck for any existing quota under the vehicle owner
             if (vo.fuelQuota) {
-                newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: vehicles[0].vehicleType.fuelAllocation })
+                newQuota = await FuelQuota.updateOne({ _id: vo.fuelQuota.id }, { [fuelQuotaName]: vehicles[0].vehicleType.fuelAllocation })
                 return newQuota
             }
             newQuota = await FuelQuota.create({ [fuelQuotaName]: vehicles[0].vehicleType.fuelAllocation })
@@ -298,7 +303,7 @@ const calculateQuota = async (vehicleOwnerId, vehicles, fuelQuotaName) => {
         // Ceheck for any existing quota under the vehicle owner
         if (vo.fuelQuota) {
             console.log("QUOT EXISTS");
-            newQuota = await FuelQuota.updateOne({_id: vo.fuelQuota.id}, { [fuelQuotaName]: q })
+            newQuota = await FuelQuota.updateOne({ _id: vo.fuelQuota.id }, { [fuelQuotaName]: q })
             return newQuota
         }
         newQuota = await FuelQuota.create({ [fuelQuotaName]: q })

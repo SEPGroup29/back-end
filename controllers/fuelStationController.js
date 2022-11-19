@@ -167,6 +167,36 @@ const getThreeFuelStations = async (req, res) => {
     }
 }
 
+const getQueueCount = async (req, res) => {
+    console.log("INSIDE GET QUEUE COUNT");
+    const { fuelStationId } = req.params
+    try {
+        const petrolTokens = await countQ(fuelStationId, 'petrol')
+        const dieselTokens = await countQ(fuelStationId, 'diesel')
+        if (petrolTokens && dieselTokens) {
+            console.log(petrolTokens, dieselTokens);
+            res.status(200).json({ petrolTokens, dieselTokens })
+        } else {
+            res.status(200).json({ error: 'Queue count failed' })
+        }
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+const countQ = async (fuelStationId, queueType) => {
+    try {
+        const queue = await Queue.findOne({ fuelStationId, queueType })
+        console.log(`${queueType} QUEUE`, queue);
+
+        const allTokens = await Vehicle.countDocuments({ queueId: queue.id })
+        const todayTokens = await Vehicle.countDocuments({ queueId: queue.id, eligibleFuel: true })
+        return { allTokens, todayTokens }
+    } catch (error) {
+        return false
+    }
+}
+
 // ========================= Helper functions ===============================================
 
 // Update the fuel queues whenever the stock is updated
@@ -202,6 +232,7 @@ const updateQueue = async (fuel, fuelStationId) => {
     }
 }
 
+// Regulate queue if needed after the stock is updated
 const regulateQueue = async (fuelStationId, queue) => {
     try {
         const nonEligibleVehicles = await Vehicle.find({ queueId: queue.id, eligibleFuel: false }).sort({ tempQueuePosition: 1 })
@@ -235,4 +266,5 @@ module.exports = {
     updateStock,
     getThreeFuelStations,
     showFuelStation,
+    getQueueCount,
 }

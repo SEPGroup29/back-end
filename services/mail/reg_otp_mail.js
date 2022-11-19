@@ -2,23 +2,29 @@ const nodemailer = require('nodemailer');
 const { MAIL_SETTINGS } = require('../../constants/constants');
 const transporter = nodemailer.createTransport(MAIL_SETTINGS);
 
+const fs = require('fs');
+const { promisify } = require('util');
+const handlebars = require('handlebars');
+
 module.exports.sendRegOtpMail = async (params) => {
+
+  const readFile = promisify(fs.readFile);
+  const html = await readFile('./services/mail/template/index.html', 'utf8')
+  const template = handlebars.compile(html);
+  const replacements = {
+    heading: "Welcome to FuelQ!",
+    content_one: `Please enter the sign up OTP to continue the registration`,
+    content_two: `${params.OTP}`,
+    footer: "If you do not request for verification please do not respond to the mail.",
+  }
+  const htmlToSend = template(replacements);
+
   try {
     let info = await transporter.sendMail({
       from: MAIL_SETTINGS.auth.user,
       to: params.to, // list of receivers
       subject: 'Hello', // Subject line
-      html: `
-      <div
-        class="container"
-        style="max-width: 90%; margin: auto; padding-top: 20px"
-      >
-        <h2>Welcome to FuelQ.</h2>
-        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to continue the registration</p>
-        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${params.OTP}</h1>
-        <p style="margin-top:50px;">If you do not request for verification please do not respond to the mail.</p>
-      </div>
-    `,
+      html: htmlToSend,
     });
     return info;
   } catch (error) {
