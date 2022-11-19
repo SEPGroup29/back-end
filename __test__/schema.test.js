@@ -10,14 +10,14 @@ beforeEach(() => {
 describe('Test mongoose user model', () => {
 
     it('Should return the doc with findById', async () => {
-        // const _doc = {
-        //     _id: "6338988daf572b59261188b6",
-        // }
+        const _doc = {
+            _id: "6338988daf572b59261188b6",
+        }
 
-        // mockingoose(User).toReturn(_doc, 'findOne');
+        mockingoose(User).toReturn(_doc, 'findOne');
 
-        // const doc = await User.findOne({ _id: '6338988daf572b59261188b6' })
-        // expect(JSON.parse(JSON.stringify(doc))._id).toBe(_doc._id)
+        const doc = await User.findOne({ _id: '6338988daf572b59261188b6' })
+        expect(JSON.parse(JSON.stringify(doc))._id).toBe(_doc._id)
     })
 
     it('Should return a new doc with save', async () => {
