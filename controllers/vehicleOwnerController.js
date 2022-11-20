@@ -476,7 +476,7 @@ const joinQueue = async (req, res) => {
         "fuelQuota"
       );
       await addToRecentQueue(user._id, stationId);
-      pq = fuel === "petrol" ? vo.fuelQuota.EPQ : vo.fuelQuota.EDQ;
+      pq = fuel === "petrol" ? vo.fuelQuota.EPQ - vo.consumedPQ : vo.fuelQuota.EDQ - vo.consumedDQ;
       if (floatAmount > pq) {
         res
           .status(200)
