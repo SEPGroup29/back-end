@@ -9,7 +9,7 @@ const handlebars = require('handlebars');
 module.exports.sendRegSuccessMail = async (params) => {
   
   const readFile = promisify(fs.readFile);
-  const html = await readFile('./services/mail/template/index.html', 'utf8')
+  const html = await readFile('./services/mail/template/temp.html', 'utf8')
   const template = handlebars.compile(html);
   const replacements = {
     heading: "Welcome to the FuelQ!",
@@ -22,17 +22,8 @@ module.exports.sendRegSuccessMail = async (params) => {
     let info = await transporter.sendMail({
       from: MAIL_SETTINGS.auth.user,
       to: params.to, // list of receivers
-      subject: 'Registration Successful ✔', // Subject line
-      html: `
-      <div
-        class="container"
-        style="max-width: 90%; margin: auto; padding-top: 20px"
-      >
-        <h2>Welcome to the FuelQ.</h2>
-        <h4>You are officially In ✔</h4>
-        <p style="margin-bottom: 30px;">You have successfully registered to the system as a vehicle owner. </p>
-      </div>
-    `,
+      subject: 'FuelQ - Registration Successful', // Subject line
+      html: htmlToSend,
     });
     return info;
   } catch (error) {

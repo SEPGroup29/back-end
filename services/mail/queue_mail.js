@@ -9,7 +9,7 @@ const handlebars = require('handlebars');
 module.exports.sendQueueMail = async (params) => {
 
   const readFile = promisify(fs.readFile);
-  const html = await readFile('./services/mail/template/index.html', 'utf8')
+  const html = await readFile('./services/mail/template/temp.html', 'utf8')
   const template = handlebars.compile(html);
   const replacements = {
     heading: "It's your turn to refill the vehicle!",
@@ -26,7 +26,7 @@ module.exports.sendQueueMail = async (params) => {
     let info = await transporter.sendMail({
       from: MAIL_SETTINGS.auth.user,
       to: params.to, // list of receivers
-      subject: `Refill Notification`, // Subject line
+      subject: `FuelQ - Refill Notification`, // Subject line
       html: htmlToSend,
     });
     return info;
