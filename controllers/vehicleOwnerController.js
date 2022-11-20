@@ -476,11 +476,11 @@ const joinQueue = async (req, res) => {
         "fuelQuota"
       );
       await addToRecentQueue(user._id, stationId);
-      pq = fuel === "petrol" ? vo.fuelQuota.EPQ : vo.fuelQuota.EDQ;
+      pq = fuel === "petrol" ? vo.fuelQuota.EPQ - vo.consumedPQ : vo.fuelQuota.EDQ - vo.consumedDQ;
       if (floatAmount > pq) {
         res
           .status(200)
-          .json({ error: "Entered amount must be less than allocated quota" });
+          .json({ error: "Entered amount must be less than or equal to remaining quota" });
         return;
       }
       // Find queue position
