@@ -9,12 +9,12 @@ const handlebars = require('handlebars');
 module.exports.sendLoginOtpMail = async (params) => {
 
   const readFile = promisify(fs.readFile);
-  const html = await readFile('./services/mail/template/index.html', 'utf8')
+  const html = await readFile('./services/mail/template/temp.html', 'utf8')
   const template = handlebars.compile(html);
   const replacements = {
     heading: "Welcome back to FuelQ!",
     content_one: `Please enter this OTP to login`,
-    content_two: `${params.OTP}`,
+    codes: `${params.OTP}`,
     footer: "If you do not request for verification please do not respond to the mail.",
   }
   const htmlToSend = template(replacements);
@@ -23,7 +23,7 @@ module.exports.sendLoginOtpMail = async (params) => {
     let info = await transporter.sendMail({
       from: MAIL_SETTINGS.auth.user,
       to: params.to, // list of receivers
-      subject: 'Welcome back !', // Subject line
+      subject: 'FuelQ - Vehicle Owner Login', // Subject line
       html: htmlToSend,
     });
     return info;
