@@ -10,6 +10,7 @@ const Queue = require("../models/queueModel");
 const { sendQueueMail } = require("../services/mail/queue_mail");
 const VehicleOwner = require("../models/vehicleOwnerModel");
 const { response } = require("express");
+const moment = require("moment/moment");
 
 const insertFuelStation = async (req, res) => {
   const {
@@ -324,6 +325,7 @@ const regulateQueue = async (fuelStationId, queue) => {
               console.log("TEMP IS ENOUGH");
               const eligibled = await Vehicle.updateOne({ _id: v.id }, { eligibleFuel: true, queuePosition: i, tempQueuePosition: 0 })
               const updatedFs = await FuelStation.updateOne({ _id: fuelStationId }, { [ts]: tempStock - v.requestedFuel }) // Update with reduced stock
+              await sendMail(v, station, queue.queueType, i)
           } else {
               return true
           }
@@ -335,6 +337,24 @@ const regulateQueue = async (fuelStationId, queue) => {
   }
 
 }
+
+// send emails to eligible vehicles at 12 midnight
+const sendMail = async (vehicle, fuelStation, fuel, position) => {
+  // Find user
+  const vehicleOwner = await VehicleOwner.findOne({_id: vehicle.vehicleOwnerId}).populate('user')
+
+  //send email
+  await sendQueueMail({
+    to: vehicleOwner.user.email,
+    date: moment().format("D/MM/YYYY"),
+    fsName: fuelStation.name,
+    city: fuelStation.nearCity,
+    regNo: vehicle.regNo,
+    queueType: fuel,
+    position: position,
+  });
+}
+
 
 module.exports = {
   insertFuelStation,
