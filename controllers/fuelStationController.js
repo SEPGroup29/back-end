@@ -130,67 +130,56 @@ const getStock = async (req, res) => {
 };
 
 const updateStock = async (req, res) => {
-  const { fuel, amount, fuelStationId } = req.body;
+  const { fuel, amount, fuelStationId } = req.body
 
   if (ObjectId.isValid(fuelStationId)) {
-    const station = await FuelStation.findOne({ _id: fuelStationId });
-    if (station) {
-      var updatedStation;
-      var result;
-      switch (fuel) {
-        case "Petrol":
-          updatedStation = await FuelStation.updateOne(
-            { _id: fuelStationId },
-            {
-              rpstock: parseFloat(station.rpstock) + amount,
-              pstock:
-                parseFloat(station.rpstock) + amount > station.pstock
-                  ? parseFloat(station.rpstock) + amount
-                  : station.pstock, // TODO:
-              tempPetrolStock: parseFloat(station.rpstock) + amount,
-            }
-          );
-          result = await updateQueue(fuel, fuelStationId);
-          break;
-        case "Diesel":
-          updatedStation = await FuelStation.updateOne(
-            { _id: fuelStationId },
-            {
-              rdstock: parseFloat(station.rdstock) + amount,
-              dstock:
-                parseFloat(station.rdstock) + amount > station.dstock
-                  ? parseFloat(station.rdstock) + amount
-                  : station.dstock, // TODO:
-              tempDieselStock: parseFloat(station.rdstock) + amount,
-            }
-          );
-          result = await updateQueue(fuel, fuelStationId);
-          break;
-        default:
-          break;
+      const station = await FuelStation.findOne({ _id: fuelStationId })
+      if (station) {
+          var updatedStation
+          var result
+          switch (fuel) {
+              case 'Petrol':
+                  updatedStation = await FuelStation.updateOne(
+                      { _id: fuelStationId },
+                      {
+                          rpstock: parseFloat(station.rpstock) + amount,
+                          pstock: parseFloat(station.rpstock) + amount > station.pstock ? parseFloat(station.rpstock) + amount : station.pstock,    // TODO:
+                          tempPetrolStock: parseFloat(station.rpstock) + amount
+                      }
+                  )
+                  // result = await updateQueue(fuel, fuelStationId)
+                  break;
+              case 'Diesel':
+                  updatedStation = await FuelStation.updateOne(
+                      { _id: fuelStationId },
+                      {
+                          rdstock: parseFloat(station.rdstock) + amount,
+                          dstock: parseFloat(station.rdstock) + amount > station.dstock ? parseFloat(station.rdstock) + amount : station.dstock,    // TODO:
+                          tempDieselStock: parseFloat(station.rdstock) + amount
+                      }
+                  )
+                  // result = await updateQueue(fuel, fuelStationId)
+                  break;
+              default:
+                  break;
+          }
+          // console.log("RESULT", result);
+          // if (!result) {
+          //     res.status(200).json({ error: 'Queue updation failed' })
+          // }
+          // if (result.regulated) {
+          res.status(200).json({ updatedStation, success: 'Stock updated successfully' })
+          // }
+          // if (result.newQueue) {
+          // res.status(200).json({ updatedStation, success: `New queues initiated successfully` })
+          // }
+      } else {
+          res.status(200).json({ error: 'Fuel station not found' })
       }
-      console.log("RESULT", result);
-      if (!result) {
-        res.status(200).json({ error: "Queue updation failed" });
-      }
-      if (result.regulated) {
-        res
-          .status(200)
-          .json({ updatedStation, success: "Queue regulated successfully" });
-      }
-      if (result.newQueue) {
-        res.status(200).json({
-          updatedStation,
-          success: `New queues initiated successfully`,
-        });
-      }
-    } else {
-      res.status(200).json({ error: "Fuel station not found" });
-    }
   } else {
-    res.status(200).json({ error: "Fuel station not found" });
+      res.status(200).json({ error: 'Fuel station not found' })
   }
-};
+}
 
 // const getThreeFuelStations = async (req, res) => {
 //     try {
@@ -263,102 +252,89 @@ const countQ = async (fuelStationId, queueType) => {
 
 // ========================= Helper functions ===============================================
 
+// Node scheduler function that runs at 12 midnight and update queues
+const schedule = require('node-schedule');
+
+const job = schedule.scheduleJob('0 0 0 * * ?', async function () {
+    console.log("===================QUEUE UPDATING===============");
+    const fuelStations = await FuelStation.find()
+    // const update = await updateQueue(fuelStations, fuelStations.id)
+    for (const station of fuelStations) {
+        console.log("STATION", station);
+        const update = await updateQueue(station, station.id)
+    }
+    console.log("===================QUEUE UPDATED===============");
+});
+
 // Update the fuel queues whenever the stock is updated
-const updateQueue = async (fuel, fuelStationId) => {
+const updateQueue = async (fs, fuelStationId) => {
+  console.log("INSIDE UODATE");
   try {
-    const petrolQueue = await Queue.findOne({
-      fuelStationId,
-      queueType: "petrol",
-    });
-    const dieselQueue = await Queue.findOne({
-      fuelStationId,
-      queueType: "diesel",
-    });
-    var regulated, newQueue;
-    if (petrolQueue) {
-      // Deleting any eligible vehicle on previous day that didn't arrived
-      await Vehicle.updateMany(
-        { queueId: petrolQueue.id, eligibleFuel: true },
-        {
-          eligibleFuel: false,
-          queueId: null,
-          queuePosition: 0,
-          requestedFuel: 0,
-        }
-      );
+      const petrolQueue = await Queue.findOne({ fuelStationId, queueType: 'petrol' })
+      const dieselQueue = await Queue.findOne({ fuelStationId, queueType: 'diesel' })
+      var regulated, newQueue
+      if (petrolQueue) {
+          // Deleting any eligible vehicle on previous day that didn't arrived
+          const vvv = await Vehicle.updateMany({ queueId: petrolQueue.id, eligibleFuel: true }, { eligibleFuel: false, queueId: null, queuePosition: 0, requestedFuel: 0 })
+          console.log("vvv",vvv);
+          //TODO:
+          const updatedFS = await FuelStation.updateOne({ _id: fuelStationId }, { tempPetrolStock: fs.rpstock })
 
-      // Make non eligible vehicles as eligible considering fuel quota
-      regulated = await regulateQueue(fuelStationId, petrolQueue);
-    } else {
-      // Initiate the petrol queue
-      newQueue = await Queue.create({ queueType: "petrol", fuelStationId });
-    }
-    if (dieselQueue) {
-      // Deleting any eligible vehicle on previous day that are still stay as eligible
-      await Vehicle.updateMany(
-        { queueId: dieselQueue.id, eligibleFuel: true },
-        {
-          eligibleFuel: false,
-          queueId: null,
-          queuePosition: 0,
-          requestedFuel: 0,
-        }
-      );
+          // Make non eligible vehicles as eligible considering fuel quota
+          regulated = await regulateQueue(fuelStationId, petrolQueue)
+      } else {
+          // Initiate the petrol queue
+          newQueue = await Queue.create({ queueType: 'petrol', fuelStationId })
+      }
+      if (dieselQueue) {
+          // Deleting any eligible vehicle on previous day that are still stay as eligible
+          await Vehicle.updateMany({ queueId: dieselQueue.id, eligibleFuel: true }, { eligibleFuel: false, queueId: null, queuePosition: 0, requestedFuel: 0 })
 
-      // Make non eligible vehicles as eligible considering fuel quota
-      regulated = await regulateQueue(fuelStationId, dieselQueue);
-    } else {
-      // Initiate the diesel queue
-      newQueue = await Queue.create({ queueType: "diesel", fuelStationId });
-    }
+          //TODO:
+          const updatedFS = await FuelStation.updateOne({ _id: fuelStationId }, { tempDieselStock: fs.rdstock })
 
-    return { regulated, newQueue };
+          // Make non eligible vehicles as eligible considering fuel quota
+          regulated = await regulateQueue(fuelStationId, dieselQueue)
+      } else {
+          // Initiate the diesel queue
+          newQueue = await Queue.create({ queueType: 'diesel', fuelStationId })
+      }
+
+      return ({ regulated, newQueue })
   } catch (error) {
-    return false;
+      return false
   }
-};
+}
 
 // Regulate queue if needed after the stock is updated
 const regulateQueue = async (fuelStationId, queue) => {
   try {
-    const nonEligibleVehicles = await Vehicle.find({
-      queueId: queue.id,
-      eligibleFuel: false,
-    }).sort({ tempQueuePosition: 1 });
-    let i = 1;
+    console.log("Q ID", queue.id);
+      const nonEligibleVehicles = await Vehicle.find({ queueId: queue.id, eligibleFuel: false }).sort({ tempQueuePosition: 1 })
+      let i = 1
+      console.log("NON ELIGIBLE", nonEligibleVehicles);
 
-    // Make each uneligible vehicle eligible until stock limit exceeds
-    for (const v of nonEligibleVehicles) {
-      const station = await FuelStation.findOne({ _id: fuelStationId });
-      const tempStock =
-        queue.queueType === "petrol"
-          ? station.tempPetrolStock
-          : station.tempDieselStock; // Get real time stocks
-      const ts =
-        queue.queueType === "petrol" ? "tempPetrolStock" : "tempDieselStock"; // Get real time stocks
-      if (tempStock >= v.requestedFuel) {
-        const eligibled = await Vehicle.updateOne(
-          { _id: v.id },
-          {
-            eligibleFuel: true,
-            queuePosition: i,
-            tempQueuePosition: 0,
+      // Make each uneligible vehicle eligible until stock limit exceeds
+      for (const v of nonEligibleVehicles) {
+          const station = await FuelStation.findOne({ _id: fuelStationId })
+          const tempStock = queue.queueType === 'petrol' ? station.tempPetrolStock : station.tempDieselStock  // Get real time stocks
+          const ts = queue.queueType === 'petrol' ? 'tempPetrolStock' : 'tempDieselStock'  // Get real time stocks
+          console.log("tempStock, v.requestedFuel", tempStock, v.requestedFuel);
+          if (tempStock >= v.requestedFuel) {
+              console.log("TEMP IS ENOUGH");
+              const eligibled = await Vehicle.updateOne({ _id: v.id }, { eligibleFuel: true, queuePosition: i, tempQueuePosition: 0 })
+              const updatedFs = await FuelStation.updateOne({ _id: fuelStationId }, { [ts]: tempStock - v.requestedFuel }) // Update with reduced stock
+          } else {
+              return true
           }
-        );
-        const updatedFs = await FuelStation.updateOne(
-          { _id: fuelStationId },
-          { [ts]: tempStock - v.requestedFuel }
-        ); // Update with reduced stock
-      } else {
-        return true;
+          i += 1
       }
-      i += 1;
-    }
-    return true;
+      return true
   } catch (error) {
-    return false;
+      return false
   }
-};
+
+}
 
 module.exports = {
   insertFuelStation,
