@@ -480,7 +480,7 @@ const joinQueue = async (req, res) => {
       if (floatAmount > pq) {
         res
           .status(200)
-          .json({ error: "Entered amount must be less than allocated quota" });
+          .json({ error: "Entered amount must be less than or equal to remaining quota" });
         return;
       }
       // Find queue position
