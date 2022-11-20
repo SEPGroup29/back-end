@@ -4,6 +4,8 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/SEPGroup29/back-end)
 ![GitHub repo size](https://img.shields.io/github/repo-size/SEPGroup29/back-end)
 
+![Logo](https://i.ibb.co/N9Hj5vd/Screenshot-2022-11-19-110117.png)
+
 This system consists of a fuel quota generation system that issues a weekly fuel quota for each registered vehicle owner depending on the number of vehicles and their types, a queue management system where a user can select a fuel station and join a queue and get notified about the fuel arrivals and queue positions, a fuel stock management system to register fuel stations and update their fuel stocks and few other features. So, the system covers each and every section of fuel distribution focusing on managing fuel demand effectively and reducing the wastage of waiting time.
 
 ## Authors
@@ -12,7 +14,7 @@ This system consists of a fuel quota generation system that issues a weekly fuel
 - [@theshan](https://github.com/hesh-git)
 - [@yasiru](https://github.com/yasirulakshan)
 
-Environmental variables that used for the backend server. (Need to create a .env file and place these variables in it)
+## Environmental variables that used for the backend server. (Need to create a .env file and place these variables in it)
  - DB_USERNAME='Database username'
  - DB_PASSWORD='Database password'
  - MONGO_URI='URI for the MongoDB Atlas database'
@@ -53,6 +55,3 @@ Environmental variables that used for the backend server. (Need to create a .env
  ## Testing
   - Testing was done using Jest, Supertest & Mockingoose
   - Execute `npm test` command to run the tests
-
-![Logo](https://i.ibb.co/N9Hj5vd/Screenshot-2022-11-19-110117.png)
-
